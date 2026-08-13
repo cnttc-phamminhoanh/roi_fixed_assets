@@ -16,7 +16,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: /home/it/roi_fixed_assets
+        working-directory: /home/it/roi_fixed_assets/backend
 
     steps:
       - name: Show deployment info
