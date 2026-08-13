@@ -115,17 +115,17 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(config.port, () => {
-  console.log("\n" + "=".repeat(50));
-  console.log("🚀 ROI DASHBOARD SERVER");
-  console.log("=".repeat(50));
+  // console.log("\n" + "=".repeat(50));
+  // console.log("🚀 ROI DASHBOARD SERVER");
+  // console.log("=".repeat(50));
   console.log(`📍 Server: http://localhost:${config.port}`);
-  console.log(`📊 Dashboard: http://localhost:${config.port}`);
-  console.log(`💚 Health: http://localhost:${config.port}/health`);
-  console.log(`📝 Environment: ${config.env}`);
-  console.log(
-    `📊 Database: ${database.isConnected ? "✅ Connected" : "⚠️ Not connected (Demo mode)"}`,
-  );
-  console.log("=".repeat(50) + "\n");
+  // console.log(`📊 Dashboard: http://localhost:${config.port}`);
+  // console.log(`💚 Health: http://localhost:${config.port}/health`);
+  // console.log(`📝 Environment: ${config.env}`);
+  // console.log(
+  //   `📊 Database: ${database.isConnected ? "✅ Connected" : "⚠️ Not connected (Demo mode)"}`,
+  // );
+  // console.log("=".repeat(50) + "\n");
 });
 
 // Graceful shutdown

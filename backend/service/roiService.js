@@ -9,7 +9,7 @@ class ROIService {
       // console.log("🔍 Bắt đầu lấy dữ liệu ROI...");
 
       if (!database.isConnected) {
-        console.log("⚠️ Database chưa kết nối, thử kết nối lại...");
+        // console.log("⚠️ Database chưa kết nối, thử kết nối lại...");
         await database.testConnection();
       }
 

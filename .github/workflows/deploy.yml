@@ -1,0 +1,49 @@
+name: Deploy ROI Fixed Assets
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: roi-fixed-assets-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: /home/it/roi_fixed_assets
+
+    steps:
+      - name: Show deployment info
+        run: |
+          echo "===== Deploy ROI Fixed Assets ====="
+          echo "Branch : ${{ github.ref_name }}"
+          echo "Commit : ${{ github.sha }}"
+          echo "Time   : $(date)"
+
+      - name: Update source
+        run: |
+          git fetch origin
+          git reset --hard origin/master
+          git clean -fd
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --omit=dev
+          else
+            npm install --omit=dev
+          fi
+
+      - name: Restart PM2
+        run: |
+          pm2 restart roi_fixed_assets
+
+      - name: Verify application
+        run: |
+          pm2 status

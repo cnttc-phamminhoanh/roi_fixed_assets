@@ -40,7 +40,7 @@ class Database {
 
         this.pool = await sql.connect(sqlConfig);
         this.isConnected = true;
-        console.log("✅ SQL Server connected successfully");
+        // console.log("✅ SQL Server connected successfully");
 
         // Test query
         // const result = await this.pool.request().query('SELECT 1+1 AS result');
