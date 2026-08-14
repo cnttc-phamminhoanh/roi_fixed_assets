@@ -278,7 +278,7 @@ order by req_date desc;
 
             const results = await database.executeTransaction(queries);
             
-            console.log(`✅ updateMultipleBenefits - Cập nhật thành công`);
+          
 
             const updatedData = await this.getROIData();
             
@@ -297,7 +297,6 @@ order by req_date desc;
     // 5. DỮ LIỆU MẪU (FALLBACK)
     // ========================================
     getSampleData() {
-        console.log('📝 getSampleData - Đang tạo dữ liệu mẫu (5 records)');
         return [
         
         ];
