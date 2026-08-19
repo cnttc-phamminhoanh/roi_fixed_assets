@@ -50,9 +50,9 @@ async function loadData() {
 // HÀM HIỂN THỊ DỮ LIỆU
 // ========================================
 function renderTable(data) {
-    console.log('📝 renderTable - Bắt đầu render...');
-    console.log('📝 renderTable - Dữ liệu nhận được:', data);
-    console.log('📝 renderTable - Số dòng:', data ? data.length : 0);
+    // console.log('📝 renderTable - Bắt đầu render...');
+    // console.log('📝 renderTable - Dữ liệu nhận được:', data);
+    // console.log('📝 renderTable - Số dòng:', data ? data.length : 0);
     
     const tbody = document.getElementById('tableBody');
     
@@ -62,7 +62,7 @@ function renderTable(data) {
     }
     
     if (!data || data.length === 0) {
-        console.log('⚠️ renderTable - Không có dữ liệu để hiển thị');
+       
         tbody.innerHTML = `
             <tr>
                 <td colspan="18" style="text-align:center;padding:40px;color:#999;">
@@ -74,7 +74,7 @@ function renderTable(data) {
         return;
     }
 
-    console.log('📝 renderTable - Đang render', data.length, 'dòng');
+    // console.log('📝 renderTable - Đang render', data.length, 'dòng');
     
     let html = '';
     data.forEach((item, index) => {
@@ -141,7 +141,7 @@ function renderTable(data) {
     });
 
     tbody.innerHTML = html;
-    console.log('✅ renderTable - Đã render xong', data.length, 'dòng');
+    // console.log('✅ renderTable - Đã render xong', data.length, 'dòng');
 }
 
 // ========================================
@@ -234,7 +234,7 @@ function formatNumber(value) {
 // MODAL FUNCTIONS
 // ========================================
 function openBenefitModal(index) {
-    console.log('📝 openBenefitModal - Mở modal cho index:', index);
+
     
     selectedItem = roiData[index];
     if (!selectedItem) { 
@@ -246,7 +246,8 @@ function openBenefitModal(index) {
     document.getElementById('currentBenefitValue').textContent = (selectedItem.actualBenefit || 0).toLocaleString();
     
     const benefitInput = document.getElementById('benefitInput');
-    benefitInput.value = selectedItem.actualBenefit || '';
+    // benefitInput.value = selectedItem.actualBenefit || '';
+    benefitInput.value = '';
     benefitInput.focus();
     benefitInput.select();
     
@@ -261,7 +262,7 @@ function openBenefitModal(index) {
 }
 
 function closeBenefitModal() {
-    console.log('📝 closeBenefitModal - Đóng modal');
+   
     document.getElementById('benefitModal').style.display = 'none';
     document.body.style.overflow = '';
     selectedItem = null;
@@ -274,11 +275,11 @@ function updatePreview(value) {
     
     const actualAmount = item.actualAmount || 0;
     const newROI = actualAmount > 0 ? (benefit / actualAmount) * 100 : 0;
-    document.getElementById('newROI').textContent = newROI.toFixed(1) + '%';
+    //document.getElementById('newROI').textContent = newROI.toFixed(1) + '%';
 }
 
 async function saveBenefit() {
-    console.log('📝 saveBenefit - Bắt đầu lưu benefit...');
+    
     
     if (!selectedItem) { 
         showNotification('Không có dữ liệu để lưu!', 'error'); 
@@ -288,8 +289,8 @@ async function saveBenefit() {
     const benefitInput = document.getElementById('benefitInput');
     const benefitValue = parseFloat(benefitInput.value);
     
-    if (isNaN(benefitValue) || benefitValue < 0) {
-        showNotification('Vui lòng nhập giá trị hợp lệ (số >= 0)!', 'warning');
+    if (isNaN(benefitValue) || benefitValue <= 0) {
+        showNotification('Vui lòng nhập giá trị lớn hơn 0!', 'warning');
         benefitInput.focus();
         benefitInput.select();
         return;
@@ -316,18 +317,13 @@ async function saveBenefit() {
             })
         });
 
-        console.log('📡 Response status:', response.status);
         const result = await response.json();
-        console.log('📡 Response data:', result);
 
         if (response.ok && result.success) {
             showNotification('✅ Cập nhật benefit thành công!', 'success');
             closeBenefitModal();
-            
-            // 👉 Tải lại dữ liệu
-            console.log('🔄 Đang tải lại dữ liệu...');
             await loadData();
-            console.log('✅ Đã tải lại dữ liệu thành công!');
+            
         } else {
             throw new Error(result.message || 'Cập nhật thất bại');
         }
@@ -475,7 +471,7 @@ function exportData() {
 // KHỞI TẠO TRANG
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Dashboard đang khởi tạo...');
+  
     loadData();
 });
 
@@ -492,7 +488,7 @@ document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') closeBenefitModal();
 });
 
-console.log('✅ main.js đã được load thành công!');
+
 
 // ========================================
 // HÀM CHUẨN HÓA TIẾNG VIỆT (BỎ DẤU)
@@ -608,7 +604,7 @@ function searchTable() {
 // ========================================
 async function loadData() {
     try {
-        console.log('📊 Đang tải dữ liệu từ server...');
+    
         const response = await fetch('/api/roi-data');
         
         if (!response.ok) {
@@ -616,7 +612,6 @@ async function loadData() {
         }
         
         const data = await response.json();
-        console.log('✅ Đã nhận dữ liệu từ server:', data.length, 'bản ghi');
         
         if (data && data.length > 0) {
             roiData = data;
@@ -631,7 +626,6 @@ async function loadData() {
         }
         
     } catch (error) {
-        console.error('❌ Lỗi khi tải dữ liệu:', error);
         roiData = [];
         searchableData = [];
         renderTable(roiData);
