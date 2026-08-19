@@ -6,24 +6,16 @@ class ROIService {
     // ========================================
     async getROIData() {
         try {
-            console.log('🔍 Bắt đầu lấy dữ liệu ROI...');
-            
             if (!database.isConnected) {
-                console.log('⚠️ Database chưa kết nối, thử kết nối lại...');
                 await database.testConnection();
             }
 
-            console.log(`📊 Trạng thái database: ${database.isConnected ? '✅ Connected' : '❌ Not connected'}`);
-
             if (!database.isConnected) {
-                console.log('⚠️ Using sample data (database not connected)');
                 return this.getSampleData();
             }
-
-            console.log('📝 Đang thực thi query SQL Server...');
             
             const query = `
-               select d.dept_name, concat(concat(a.sheet_no, concat('/', a.sheet_id)), concat(' - ', a.fa_desc)) as fa_desc, 
+            select d.dept_name, concat(concat(a.sheet_no, concat('/', a.sheet_id)), concat(' - ', a.fa_desc)) as fa_desc, 
         c.base_name as pur_reason, 0 fa_depr, a1.create_date as req_date, max(i1.sheet_date) as in_date, 
         (a.sheet_qty * a.sheet_pri)/case when a.def07 = 0 then null else a.def07 end as yr_payback, 
         DATEADD(DAY,CAST(((a.sheet_qty * a.sheet_pri) / case when a.def07 = 0 then null else a.def07 end) * 365 AS INT),MAX(i1.sheet_date)) AS payback_date,
@@ -49,7 +41,6 @@ order by req_date desc;
 
             try {
                 const results = await database.executeQuery(query);
-                console.log(`✅ Query thành công, nhận được ${results ? results.length : 0} dòng dữ liệu`);
 
                 if (results && results.length > 0) {
                     console.log('📝 DỮ LIỆU THÔ TỪ SQL (mẫu 1 record):');
@@ -60,10 +51,7 @@ order by req_date desc;
                     console.log('⚠️ No data found, using sample data');
                     return this.getSampleData();
                 }
-
-                console.log('🔄 Đang transform dữ liệu...');
                 const transformed = this.transformData(results);
-                console.log(`✅ Transform thành công, ${transformed.length} bản ghi`);
                 
                 if (transformed && transformed.length > 0) {
                     console.log('📝 DỮ LIỆU SAU TRANSFORM (mẫu 1 record):');
@@ -277,9 +265,6 @@ order by req_date desc;
             }));
 
             const results = await database.executeTransaction(queries);
-            
-          
-
             const updatedData = await this.getROIData();
             
             return {

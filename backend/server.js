@@ -57,12 +57,9 @@ app.post('/api/update-benefit', async (req, res) => {
                 error: 'Giá trị benefit phải là số và lớn hơn hoặc bằng 0'
             });
         }
-
-        console.log(`📝 Updating benefit: planNo=${planNo}, planId=${planId}, value=${benefitValue}`);
         const result = await roiService.updateActualBenefit(planNo, planId, benefitValue);
         res.json(result);
     } catch (error) {
-        console.error('❌ Error updating benefit:', error);
         res.status(500).json({
             error: 'Failed to update benefit',
             message: error.message
@@ -122,13 +119,11 @@ app.listen(config.port, () => {
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-    console.log('🛑 Received SIGTERM signal, closing server...');
     await database.closePool();
     process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-    console.log('🛑 Received SIGINT signal, closing server...');
     await database.closePool();
     process.exit(0);
 });

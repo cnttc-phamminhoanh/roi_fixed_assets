@@ -40,15 +40,10 @@ class Database {
 
                 this.pool = await sql.connect(sqlConfig);
                 this.isConnected = true;
-                console.log('✅ SQL Server connected successfully');
-                
                 // Test query
                 const result = await this.pool.request().query('SELECT 1+1 AS result');
-                console.log('✅ Test query successful:', result.recordset);
                 
             } catch (err) {
-                console.error('❌ SQL Server connection failed:', err.message);
-                console.log('⚠️ Server sẽ chạy ở chế độ demo (dữ liệu mẫu)');
                 this.isConnected = false;
                 this.pool = null;
             }
@@ -103,7 +98,6 @@ async executeQuery(sqlQuery, params = []) {
         const result = await request.query(sqlQuery);
         return result.recordset;
     } catch (err) {
-        console.error('❌ Query error:', err.message);
         throw err;
     }
 }
@@ -145,7 +139,6 @@ async executeQuery(sqlQuery, params = []) {
                 await this.pool.close();
                 this.pool = null;
                 this.isConnected = false;
-                console.log('✅ Database connection closed');
             }
         } catch (err) {
             console.error('❌ Error closing connection:', err.message);
