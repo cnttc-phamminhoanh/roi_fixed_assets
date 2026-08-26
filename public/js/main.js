@@ -8,64 +8,84 @@ const sampleData = [];
 // ========================================
 let roiData = [];
 let selectedItem = null;
+let searchKeyword = '';
+// ========================================
+// PAGINATION - BIẾN TOÀN CỤC
+// ========================================
+let currentPage = 1;
+let rowsPerPage = 50;
+let totalPages = 0;
+let fullData = [];
 
 // ========================================
 // HÀM LẤY DỮ LIỆU TỪ SERVER
 // ========================================
-async function loadData() {
+async function loadData(page = 1, keyword = '') {
     try {
-        console.log('📊 Đang tải dữ liệu từ server...');
-        // 👉 SỬA: Dùng relative path cho đồng bộ
-        const response = await fetch('/api/roi-data');
-        
+        let url = `/api/roi-data?page=${page}&limit=${rowsPerPage}`;
+        if (keyword) {
+            url += `&search=${encodeURIComponent(keyword)}`;
+        }
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        let result;
+        try {
+            result = await response.json();
+        } catch (parseError) {
+            throw new Error('Dữ liệu từ server không hợp lệ');
+        }
+        const data = result?.data || result || [];
+        const total = result?.total || data.length || 0;
         
-        const data = await response.json();
-        console.log('✅ Đã nhận dữ liệu từ server:', data.length, 'bản ghi');
-        
-        if (data && data.length > 0) {
-            console.log('📝 Dữ liệu mẫu (record 1):', JSON.stringify(data[0], null, 2));
-            // 👉 KIỂM TRA actualBenefit
-            console.log('📝 actualBenefit của record 1:', data[0].actualBenefit);
+        // ✅ Nếu data là mảng, gán vào roiData
+        if (Array.isArray(data)) {
+            roiData = data;
         } else {
-            console.log('⚠️ Dữ liệu từ server rỗng!');
+            roiData = [];
         }
         
-        roiData = data;
+        totalPages = Math.ceil(total / rowsPerPage);
+        currentPage = page;
+        searchKeyword = keyword;
+        
+        // Chuẩn bị dữ liệu tìm kiếm
+        searchableData = prepareSearchData(roiData);
+        
+        // Render bảng
         renderTable(roiData);
-        showNotification(`Đã tải ${data.length} bản ghi từ database!`, 'success');
+        updatePaginationControls(total);
+        
+        // if (roiData.length > 0) {
+        //     showNotification(`Đã tải ${roiData.length} bản ghi`, 'success');
+        // } else {
+        //     showNotification('Không có dữ liệu!', 'warning');
+        // }
         
     } catch (error) {
-        console.error('❌ Lỗi khi tải dữ liệu:', error);
-        console.log('⚠️ Sử dụng dữ liệu mẫu (rỗng)');
-        roiData = sampleData;
+        roiData = [];
         renderTable(roiData);
-        showNotification('Không thể kết nối server!', 'error');
     }
 }
 
 // ========================================
 // HÀM HIỂN THỊ DỮ LIỆU
 // ========================================
+// ========================================
+// HÀM HIỂN THỊ DỮ LIỆU
+// ========================================
 function renderTable(data) {
-    // console.log('📝 renderTable - Bắt đầu render...');
-    // console.log('📝 renderTable - Dữ liệu nhận được:', data);
-    // console.log('📝 renderTable - Số dòng:', data ? data.length : 0);
-    
     const tbody = document.getElementById('tableBody');
     
     if (!tbody) {
-        console.error('❌ Không tìm thấy element tableBody!');
         return;
     }
     
     if (!data || data.length === 0) {
-       
         tbody.innerHTML = `
             <tr>
-                <td colspan="18" style="text-align:center;padding:40px;color:#999;">
+                <td colspan="19" style="text-align:center;padding:40px;color:#999;">
                     <i class="fas fa-inbox" style="font-size:48px;display:block;margin-bottom:10px;"></i>
                     Không có dữ liệu
                 </td>
@@ -74,18 +94,37 @@ function renderTable(data) {
         return;
     }
 
-    // console.log('📝 renderTable - Đang render', data.length, 'dòng');
-    
+    // ✅ ĐỘ RỘNG CỘT MẶC ĐỊNH
+    const colWidths = {
+        '#': 50,
+        'Department': 140,
+        'Asset Class': 120,
+        'Asset Description': 150,
+        'Purchase Reason': 140,
+        'Depreciation': 120,
+        'Request Date': 130,
+        'Final Receipt Date': 130,
+        'Estimated Payback Time (Y)': 120,
+        'Estimated Payback Date': 140,
+        'Budget Quantity': 70,
+        'Budget Amount': 110,
+        'Budget Benefit': 110,
+        'Budget ROI': 80,
+        'Actual Quantity': 70,
+        'Actual Amount': 110,
+        'Actual Benefit': 110,
+        'Actual ROI': 80,
+        'Planned Results': 130
+    };
+
     let html = '';
     data.forEach((item, index) => {
         const budgetROIClass = getROIClass(item.budgetROI);
         const actualROIClass = getROIClass(item.actualROI);
         const roiDiff = (item.actualROI || 0) - (item.budgetROI || 0);
-        const diffClass = roiDiff > 0 ? 'roi-positive' : (roiDiff < 0 ? 'roi-negative' : 'roi-neutral');
-        const diffIcon = roiDiff > 0 ? '↑' : (roiDiff < 0 ? '↓' : '→');
 
         // XÉT PASS/NOT PASS
-        let plannedResultText = 'N/A';
+        let plannedResultText = '-';
         let plannedBgColor = '#f8f9fa';
         let plannedTextColor = '#6c757d';
         
@@ -102,38 +141,32 @@ function renderTable(data) {
                 plannedBgColor = '#f8d7da';
                 plannedTextColor = '#dc3545';
             }
-        } else if (actualROI === 0 && budgetROI > 0) {
-            plannedResultText = '-';
-            plannedTextColor = '#050401';
         }
 
         html += `
             <tr>
-                <td style="font-weight:600;padding:8px 12px;">${item.department || 'N/A'}</td>
-                <td style="padding:8px 12px;">${item.assetClass || 'N/A'}</td>
-                <td style="padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-                title="${item.assetDescription || 'N/A'}">${item.assetDescription || 'N/A'}</td>
-                <td style="padding:8px 12px;">${item.purchaseReason || 'N/A'}</td>
-                <td style="padding:8px 12px;">${item.depreciation || 'N/A'}</td>
-                <td style="padding:8px 12px;">${formatDate(item.requestDate)}</td>
-                <td style="padding:8px 12px;">${formatDate(item.finalReceiptDate)}</td>
-
-            <td style="font-weight:600;text-align:center;padding:8px 12px;">${formatPaybackTime(item.estimatedPaybackTime)}</td>
-
-                <td style="font-weight:600;padding:8px 12px;">${formatDate(item.estimatedPaybackDate)}</td>
-
-
-                <td style="text-align:center;padding:8px 12px;">${item.budgetQuantity || 0}</td>
-                <td style="text-align:right;padding:8px 12px;">${formatNumber(item.budgetAmount)}</td>
-                <td style="text-align:right;padding:8px 12px;">${formatNumber(item.budgetBenefit)}</td>
-                <td style="text-align:center;padding:8px 12px;" class="${budgetROIClass}">${item.budgetROI ? item.budgetROI.toFixed(1) : 0}%</td>
-                <td style="text-align:center;padding:8px 12px;">${item.actualQuantity || 0}</td>
-                <td style="text-align:right;padding:8px 12px;">${formatNumber(item.actualAmount)}</td>
-                <td style="text-align:right;padding:8px 12px;" class="clickable-cell" onclick="openBenefitModal(${index})" title="Click to edit benefit">${formatNumber(item.actualBenefit)}</td>
-            <td style="text-align:center;padding:8px 12px;" class="${actualROIClass}">
-    ${item.actualROI ? item.actualROI.toFixed(1) : 0}%
-</td>
-                <td style="text-align:center;padding:8px 12px;font-weight:700;background-color:${plannedBgColor};color:${plannedTextColor};border-radius:4px;">
+                <td style="text-align:center;font-weight:600;padding:8px 12px;color:#1a3c5e;width:${colWidths['#']}px;min-width:${colWidths['#']}px;">${index + 1}</td>
+                <td style="font-weight:600;padding:8px 12px;width:${colWidths['Department']}px;min-width:${colWidths['Department']}px;">${item.department || '-'}</td>
+                <td style="padding:8px 12px;width:${colWidths['Asset Class']}px;min-width:${colWidths['Asset Class']}px;">${item.assetClass || '-'}</td>
+                <td style="padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:${colWidths['Asset Description']}px ;min-width:${colWidths['Asset Description']}px;"
+                    title="${item.assetDescription || '-'}">${item.assetDescription || '-'}</td>
+                <td style="padding:8px 12px;width:${colWidths['Purchase Reason']}px;min-width:${colWidths['Purchase Reason']}px;">${item.purchaseReason || '-'}</td>
+                <td style="padding:8px 12px;width:${colWidths['Depreciation']}px;min-width:${colWidths['Depreciation']}px;">${item.depreciation || '-'}</td>
+                <td style="padding:8px 12px;width:${colWidths['Request Date']}px;min-width:${colWidths['Request Date']}px;">${formatDate(item.requestDate)}</td>
+                <td style="padding:8px 12px;width:${colWidths['Final Receipt Date']}px;min-width:${colWidths['Final Receipt Date']}px;">${formatDate(item.finalReceiptDate)}</td>
+                <td style="font-weight:600;text-align:center;padding:8px 12px;width:${colWidths['Estimated Payback Time (Y)']}px;min-width:${colWidths['Estimated Payback Time (Y)']}px;">${formatPaybackTime(item.estimatedPaybackTime)}</td>
+                <td style="font-weight:600;padding:8px 12px;width:${colWidths['Estimated Payback Date']}px;min-width:${colWidths['Estimated Payback Date']}px;">${formatDate(item.estimatedPaybackDate)}</td>
+                <td style="text-align:center;padding:8px 12px;width:${colWidths['Budget Quantity']}px;min-width:${colWidths['Budget Quantity']}px;">${item.budgetQuantity || 0}</td>
+                <td style="text-align:right;padding:8px 12px;width:${colWidths['Budget Amount']}px;min-width:${colWidths['Budget Amount']}px;">${formatNumber(item.budgetAmount)}</td>
+                <td style="text-align:right;padding:8px 12px;width:${colWidths['Budget Benefit']}px;min-width:${colWidths['Budget Benefit']}px;">${item.budgetBenefit && item.budgetBenefit !== 0 ? formatNumber(item.budgetBenefit) : '-'}</td>
+                <td style="text-align:center;padding:8px 12px;width:${colWidths['Budget ROI']}px;min-width:${colWidths['Budget ROI']}px;" class="${budgetROIClass}">${item.budgetROI && item.budgetROI !== 0 ? item.budgetROI.toFixed(1) + '%' : '-'}</td>
+                <td style="text-align:center;padding:8px 12px;width:${colWidths['Actual Quantity']}px;min-width:${colWidths['Actual Quantity']}px;">${item.actualQuantity || 0}</td>
+                <td style="text-align:right;padding:8px 12px;width:${colWidths['Actual Amount']}px;min-width:${colWidths['Actual Amount']}px;">${formatNumber(item.actualAmount)}</td>
+                <td style="text-align:right;padding:8px 12px;width:${colWidths['Actual Benefit']}px;min-width:${colWidths['Actual Benefit']}px;" class="clickable-cell" onclick="openBenefitModal(${index})" title="Click to edit benefit">${formatNumber(item.actualBenefit)}</td>
+                <td style="text-align:center;padding:8px 12px;width:${colWidths['Actual ROI']}px;min-width:${colWidths['Actual ROI']}px;" class="${actualROIClass}">
+                ${item.actualROI && item.actualROI !== 0 ? item.actualROI.toFixed(1) + '%' : '-'}
+                </td>
+                <td style="text-align:center;padding:8px 12px;font-weight:700;background-color:${plannedBgColor};color:${plannedTextColor};border-radius:4px;width:${colWidths['Planned Results']}px;min-width:${colWidths['Planned Results']}px;">
                     ${plannedResultText}
                 </td>
             </tr>
@@ -141,15 +174,109 @@ function renderTable(data) {
     });
 
     tbody.innerHTML = html;
-    // console.log('✅ renderTable - Đã render xong', data.length, 'dòng');
 }
+// ========================================
+// PAGINATION
+// ========================================
+
+/**
+ * Lấy dữ liệu phân trang
+ */
+function updatePaginationControls(total) {
+    const totalRecords = total || roiData.length;
+    const start = (currentPage - 1) * rowsPerPage + 1;
+    const end = Math.min(currentPage * rowsPerPage, totalRecords);
+    
+    const infoEl = document.getElementById('paginationInfo');
+    if (infoEl) {
+        infoEl.textContent = totalRecords > 0 
+            ? `Hiển thị ${start}-${end} trên tổng ${totalRecords} bản ghi`
+            : 'Không có dữ liệu';
+    }
+    
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+    
+    renderPageNumbers();
+}
+
+/**
+ * Render các nút số trang
+ */
+function renderPageNumbers() {
+    const container = document.getElementById('pageNumbers');
+    if (!container) return;
+    
+    let html = '';
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    
+    if (startPage > 1) {
+        html += `<button class="page-number-btn" onclick="goToPage(1)">1</button>`;
+        if (startPage > 2) {
+            html += `<span style="padding:0 4px;color:#6c757d;">...</span>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-number-btn ${i === currentPage ? 'active-page' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            html += `<span style="padding:0 4px;color:#6c757d;">...</span>`;
+        }
+        html += `<button class="page-number-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+/**
+ * Chuyển đến trang cụ thể
+ */
+function goToPage(page) {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    
+    // ✅ Gọi API lấy dữ liệu trang mới
+    loadData(page, searchKeyword);
+    
+    const tableWrapper = document.querySelector('.table-wrapper');
+    if (tableWrapper) tableWrapper.scrollTop = 0;
+}
+
+/**
+ * Chuyển trang (trước/sau)
+ */
+function changePage(delta) {
+    const newPage = currentPage + delta;
+    if (newPage < 1 || newPage > totalPages) return;
+    goToPage(newPage);
+}
+
+/**
+ * Thay đổi số dòng mỗi trang
+ */
+function changeRowsPerPage() {
+    const select = document.getElementById('rowsPerPage');
+    rowsPerPage = parseInt(select.value);
+    currentPage = 1;
+    // ✅ Gọi API với số dòng mới
+    loadData(1, searchKeyword);
+}
+
 
 // ========================================
 // CẬP NHẬT THẺ THỐNG KÊ
 // ========================================
 function updateSummaryCards(data) {
-    console.log('📝 updateSummaryCards - Bắt đầu cập nhật thẻ thống kê...');
-    
     if (!data || data.length === 0) {
         document.getElementById('totalPlanInvestment').textContent = '$0';
         document.getElementById('totalActualInvestment').textContent = '$0';
@@ -171,10 +298,7 @@ function updateSummaryCards(data) {
     document.getElementById('totalActualInvestment').textContent = formatCurrency(totalActual);
     document.getElementById('avgPlanROI').textContent = avgPlan.toFixed(1) + '%';
     document.getElementById('avgActualROI').textContent = avgActual.toFixed(1) + '%';
-    
-    console.log('✅ updateSummaryCards - Đã cập nhật thẻ thống kê');
 }
-
 // ========================================
 // HÀM TIỆN ÍCH
 // ========================================
@@ -213,18 +337,11 @@ function formatDate(dateString) {
     }
 }
 
-
-// ========================================
-// HÀM FORMAT PAYBACK TIME (4 SỐ THẬP PHÂN)
-// ========================================
 function formatPaybackTime(value) {
     if (value === undefined || value === null || isNaN(value)) return '0.0000';
     return parseFloat(value).toFixed(4);
 }
 
-// ========================================
-// HÀM FORMAT SỐ (2 SỐ THẬP PHÂN)
-// ========================================
 function formatNumber(value) {
     if (value === undefined || value === null || isNaN(value)) return '0.00';
     return '$' + parseFloat(value).toFixed(2);
@@ -234,19 +351,42 @@ function formatNumber(value) {
 // MODAL FUNCTIONS
 // ========================================
 function openBenefitModal(index) {
-
-    
     selectedItem = roiData[index];
     if (!selectedItem) { 
-        showNotification('Không tìm thấy dữ liệu!', 'error'); 
+        showNotification('Không tìm thấy dữ liệu!', 'error');
         return; 
     }
 
-    document.getElementById('modalAssetDesc').textContent = selectedItem.assetDescription || 'N/A';
+    const hasFinalReceiptDate = selectedItem.hasFinalReceiptDate || false;
+    const hasEstimatedPaybackDate = selectedItem.hasEstimatedPaybackDate || false;
+    const actualAmount = parseFloat(selectedItem.actualAmount) || 0;
+    
+    if (!hasFinalReceiptDate) {
+        showNotification(
+            '⛔ Không thể nhập Benefit vì chưa có ngày nhập hàng (Final Receipt Date)!', 
+            'error'
+        );
+        return;
+    }
+    if (!hasEstimatedPaybackDate) {
+        showNotification(
+            '⛔ Không thể nhập Benefit vì chưa có ngày hoàn vốn dự kiến (Estimated Payback Date)!', 
+            'error'
+        );
+        return;
+    }
+    if (actualAmount <= 0) {
+        showNotification(
+            '⛔ Không thể nhập Benefit vì Actual Amount = 0. Vui lòng cập nhật số tiền thực tế trước!', 
+            'error'
+        );
+        return;
+    }
+
+    document.getElementById('modalAssetDesc').textContent = selectedItem.assetDescription || '-';
     document.getElementById('currentBenefitValue').textContent = (selectedItem.actualBenefit || 0).toLocaleString();
     
     const benefitInput = document.getElementById('benefitInput');
-    // benefitInput.value = selectedItem.actualBenefit || '';
     benefitInput.value = '';
     benefitInput.focus();
     benefitInput.select();
@@ -256,13 +396,12 @@ function openBenefitModal(index) {
     document.getElementById('benefitModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
     
-    benefitInput.oninput = function() { 
-        updatePreview(this.value); 
+    benefitInput.oninput = function() {
+        updatePreview(this.value);
     };
 }
 
 function closeBenefitModal() {
-   
     document.getElementById('benefitModal').style.display = 'none';
     document.body.style.overflow = '';
     selectedItem = null;
@@ -272,29 +411,39 @@ function updatePreview(value) {
     const benefit = parseFloat(value) || 0;
     const item = selectedItem;
     if (!item) return;
-    
     const actualAmount = item.actualAmount || 0;
     const newROI = actualAmount > 0 ? (benefit / actualAmount) * 100 : 0;
-    //document.getElementById('newROI').textContent = newROI.toFixed(1) + '%';
 }
-
 async function saveBenefit() {
-    
-    
-    if (!selectedItem) { 
-        showNotification('Không có dữ liệu để lưu!', 'error'); 
-        return; 
+    if (!selectedItem) {
+        return;
     }
     
     const benefitInput = document.getElementById('benefitInput');
     const benefitValue = parseFloat(benefitInput.value);
     
-    if (isNaN(benefitValue) || benefitValue <= 0) {
-        showNotification('Vui lòng nhập giá trị lớn hơn 0!', 'warning');
+    if (isNaN(benefitValue) || benefitValue < 0) {
+        showNotification('Vui lòng nhập giá trị lớn hơn hoặc bằng 0!', 'warning');
         benefitInput.focus();
         benefitInput.select();
         return;
     }
+
+    // ✅ KIỂM TRA GIỚI HẠN DECIMAL(18,8)
+    // Phần nguyên tối đa 10 chữ số, phần thập phân tối đa 8 chữ số
+    const strValue = benefitInput.value.trim();
+    const parts = strValue.split('.');
+    const integerPart = parts[0] || '0';
+
+    
+    // Kiểm tra phần nguyên (tối đa 10 chữ số)
+    if (integerPart.replace('-', '').length > 10) {
+        showNotification('❌ Không được nhập quá 10 chữ số !', 'warning');
+        benefitInput.focus();
+        benefitInput.select();
+        return;
+    }
+  
 
     const submitBtn = document.querySelector('.btn-submit-simple') || document.querySelector('.btn-submit');
     const originalText = submitBtn ? submitBtn.innerHTML : 'Submit';
@@ -304,7 +453,6 @@ async function saveBenefit() {
     }
 
     try {
-        // 👉 Đồng bộ URL với loadData()
         const response = await fetch('/api/update-benefit', {
             method: 'POST',
             headers: {
@@ -322,16 +470,11 @@ async function saveBenefit() {
         if (response.ok && result.success) {
             showNotification('✅ Cập nhật benefit thành công!', 'success');
             closeBenefitModal();
-            await loadData();
-            
+            await loadData(currentPage, searchKeyword);
         } else {
             throw new Error(result.message || 'Cập nhật thất bại');
         }
     } catch (error) {
-        console.error('❌ Lỗi khi lưu benefit:', error);
-        showNotification(`❌ ${error.message}`, 'error');
-        
-        // Fallback: cập nhật local
         selectedItem.actualBenefit = benefitValue;
         selectedItem.actualROI = selectedItem.actualAmount > 0 ? (benefitValue / selectedItem.actualAmount) * 100 : 0;
         
@@ -355,6 +498,7 @@ async function saveBenefit() {
         }
     }
 }
+
 
 // ========================================
 // NOTIFICATION
@@ -411,14 +555,11 @@ function showNotification(message, type = 'info') {
 // HÀM REFRESH & EXPORT
 // ========================================
 function refreshData() {
-    console.log('📝 refreshData - Làm mới dữ liệu...');
     showNotification('Đang làm mới dữ liệu...', 'info');
-    loadData();
+    loadData(currentPage, searchKeyword);
 }
 
 function exportData() {
-    console.log('📝 exportData - Xuất dữ liệu...');
-    
     if (!roiData || roiData.length === 0) {
         showNotification('Không có dữ liệu để xuất!', 'warning');
         return;
@@ -468,29 +609,6 @@ function exportData() {
 }
 
 // ========================================
-// KHỞI TẠO TRANG
-// ========================================
-document.addEventListener('DOMContentLoaded', function() {
-  
-    loadData();
-});
-
-// Đóng modal khi click bên ngoài
-document.addEventListener('click', function(event) {
-    const modal = document.getElementById('benefitModal');
-    if (event.target === modal || event.target.classList.contains('modal-overlay')) {
-        closeBenefitModal();
-    }
-});
-
-// Đóng modal khi nhấn ESC
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') closeBenefitModal();
-});
-
-
-
-// ========================================
 // HÀM CHUẨN HÓA TIẾNG VIỆT (BỎ DẤU)
 // ========================================
 function removeVietnameseTones(str) {
@@ -520,6 +638,7 @@ function removeVietnameseTones(str) {
     return result;
 }
 
+
 // ========================================
 // LƯU TRỮ DỮ LIỆU ĐÃ CHUẨN HÓA ĐỂ TÌM KIẾM
 // ========================================
@@ -539,96 +658,236 @@ function prepareSearchData(data) {
 // ========================================
 function searchTable() {
     const input = document.getElementById('searchInput');
-    const filter = removeVietnameseTones(input.value.toLowerCase().trim());
+    const filter = input.value.trim();
     const clearBtn = document.getElementById('searchClear');
     
-    // Hiển thị/ẩn nút clear
     if (filter.length > 0) {
         clearBtn.classList.add('show');
     } else {
         clearBtn.classList.remove('show');
     }
-
-    // Nếu không có dữ liệu, thoát
-    if (!roiData || roiData.length === 0) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="18" style="text-align:center;padding:40px;color:#999;">
-                    <i class="fas fa-inbox" style="font-size:48px;display:block;margin-bottom:10px;"></i>
-                    Không có dữ liệu để tìm kiếm
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    // Nếu không có từ khóa, hiển thị tất cả
-    if (filter === '') {
-        renderTable(roiData);
-        hideSearchResultCount();
-        return;
-    }
-
-    // Lọc dữ liệu theo Asset Description
-    const filteredData = roiData.filter((item, index) => {
-        // Kiểm tra searchableData
-        if (searchableData && searchableData.length > 0) {
-            return searchableData[index]?._searchText?.includes(filter) || false;
-        }
-        // Fallback: chuẩn hóa trực tiếp
-        const searchText = removeVietnameseTones((item.assetDescription || '').toLowerCase());
-        return searchText.includes(filter);
-    });
-
-    renderTable(filteredData);
     
-    if (filteredData.length > 0) {
-        showSearchResultCount(filteredData.length, roiData.length);
-    } else {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="18" style="text-align:center;padding:40px;color:#999;">
-                    <i class="fas fa-search" style="font-size:48px;display:block;margin-bottom:10px;"></i>
-                    Không tìm thấy Asset nào cho "<strong>${input.value}</strong>"
-                </td>
-            </tr>
-        `;
-        hideSearchResultCount();
-    }
+    // ✅ Lưu từ khóa search và gọi API
+    searchKeyword = filter;
+    currentPage = 1;
+    
+    // ✅ Gọi API với từ khóa tìm kiếm
+    loadData(1, searchKeyword);
 }
 
 // ========================================
-// CẬP NHẬT loadData()
+// XÓA TÌM KIẾM
 // ========================================
-async function loadData() {
-    try {
+function clearSearch() {
+    const input = document.getElementById('searchInput');
+    if (input) input.value = '';
+    const clearBtn = document.getElementById('searchClear');
+    if (clearBtn) clearBtn.classList.remove('show');
     
-        const response = await fetch('/api/roi-data');
+    searchKeyword = '';
+    currentPage = 1;
+    
+    // ✅ Gọi API lấy toàn bộ dữ liệu
+    loadData(1, '');
+}
+
+// ========================================
+// COLUMN RESIZE - KÉO THẢ (colResizable)
+// ========================================
+function initColumnResize() {
+    if (typeof $ === 'undefined') {
+        return;
+    }
+    
+    if (!$.fn.colResizable) {
+        return;
+    }
+    
+    const table = document.getElementById('roiTable');
+    if (!table) {
+        return;
+    }
+    
+    const tbody = document.getElementById('tableBody');
+    if (!tbody || tbody.children.length === 0) {
+        setTimeout(initColumnResize, 500);
+        return;
+    }
+    
+    try {
+        try {
+            $(table).colResizable({ disable: true });
+        } catch (e) {}
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        $(table).colResizable({
+            liveDrag: false,
+            resizeMode: 'flex',
+            minWidth: 50,
+            maxWidth: 750,
+            disabledColumns: [0],
+            postbackSafe: true,
+            gripInnerHtml: '<div style="width:4px;height:30px;background:#c0c0c0;border-radius:2px;margin:0 auto;"></div>',
+            draggingClass: 'resizing-active',
+            onResize: function() {}
+        });
         
-        const data = await response.json();
+    } catch (error) {}
+}
+
+function resetColumnWidths() {
+    const table = document.getElementById('roiTable');
+    if (!table) return;
+    
+    const defaultWidths = [50, 130, 120, 200, 150, 120, 120, 130, 160, 150, 80, 120, 150, 80, 80, 120, 150, 80, 130];
+    
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach((th, index) => {
+        const width = defaultWidths[index] || 120;
+        th.style.width = width + 'px';
+        th.style.minWidth = width + 'px';
+        th.style.maxWidth = width + 'px';
+    });
+    
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, index) => {
+            const width = defaultWidths[index] || 120;
+            cell.style.width = width + 'px';
+            cell.style.minWidth = width + 'px';
+            cell.style.maxWidth = width + 'px';
+        });
+    });
+    
+    if (typeof $ !== 'undefined' && $.fn.colResizable) {
+        $(table).colResizable('destroy');
+        setTimeout(() => initColumnResize(), 200);
+    }
+    
+    showNotification('Đã reset độ rộng cột!', 'success');
+}
+
+// ========================================
+// KHỞI TẠO TRANG
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    // ✅ Tải dữ liệu trang đầu tiên
+    loadData(1, '');
+    setTimeout(function() {
+        initColumnResize();
+    }, 1000);
+});
+
+// Đóng modal
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('benefitModal');
+    if (event.target === modal || event.target.classList.contains('modal-overlay')) {
+        closeBenefitModal();
+    }
+});
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') closeBenefitModal();
+});
+
+// ========================================
+// COL RESIZABLE INLINE - FIX
+// ========================================
+
+(function() {
+    if (typeof $ !== 'undefined' && !$.fn.colResizable) {
+        console.log('🔧 Đang khởi tạo colResizable inline...');
         
-        if (data && data.length > 0) {
-            roiData = data;
-            searchableData = prepareSearchData(data);
-            renderTable(roiData);
-            showNotification(`Đã tải ${data.length} bản ghi từ database!`, 'success');
-        } else {
-            roiData = [];
-            searchableData = [];
-            renderTable(roiData);
-            showNotification('Không có dữ liệu!', 'warning');
-        }
-        
-    } catch (error) {
-        roiData = [];
-        searchableData = [];
-        renderTable(roiData);
-        showNotification('Không thể kết nối server!', 'error');
+        $.fn.colResizable = function(options) {
+            const defaults = {
+                liveDrag: true,
+                resizeMode: 'flex',
+                minWidth: 50,
+                maxWidth: 500,
+                disabledColumns: []
+            };
+            
+            const settings = $.extend({}, defaults, options);
+            
+            return this.each(function() {
+                const table = $(this);
+                const headers = table.find('thead th');
+                let dragging = false;
+                let currentCol = null;
+                let currentColIndex = -1;
+                let startX = 0;
+                let startWidth = 0;
+                table.find('.JColResizer').remove();
+                headers.each(function(index) {
+                    if (settings.disabledColumns.includes(index)) {
+                        return;
+                    }
+                    const th = $(this);
+                    th.css('position', 'relative');
+                    
+                    const handle = $('<div class="JColResizer"></div>');
+                    handle.css({
+                        position: 'absolute',
+                        right: '-5px',
+                        top: '0',
+                        width: '10px',
+                        height: '100%',
+                        cursor: 'col-resize',
+                        zIndex: '10'
+                    });
+                    th.append(handle);
+                    
+                    handle.on('mousedown', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dragging = true;
+                        currentCol = th;
+                        currentColIndex = index;
+                        startX = e.clientX;
+                        startWidth = th.outerWidth();
+                        $('body').css('cursor', 'col-resize');
+                        table.addClass('resizing-active');
+                        handle.addClass('active');
+                    });
+                });
+                
+                $(document).on('mousemove', function(e) {
+                    if (!dragging || !currentCol) return;
+                    const diff = e.clientX - startX;
+                    const newWidth = Math.max(settings.minWidth, Math.min(settings.maxWidth, startWidth + diff));
+                    currentCol.css('width', newWidth + 'px');
+                    currentCol.css('min-width', newWidth + 'px');
+                    currentCol.css('max-width', newWidth + 'px');
+                    table.find('tbody tr').each(function() {
+                        const cell = $(this).find('td').eq(currentColIndex);
+                        if (cell.length) {
+                            cell.css('width', newWidth + 'px');
+                            cell.css('min-width', newWidth + 'px');
+                            cell.css('max-width', newWidth + 'px');
+                        }
+                    });
+                });
+                
+                $(document).on('mouseup', function() {
+                    if (dragging) {
+                        dragging = false;
+                        currentCol = null;
+                        currentColIndex = -1;
+                        $('body').css('cursor', '');
+                        table.removeClass('resizing-active');
+                        table.find('.JColResizer').removeClass('active');
+                    }
+                });
+            });
+        };
+    }
+})();
+
+// ========================================
+// XỬ LÝ PHÍM ENTER KHI TÌM KIẾM
+// ========================================
+function handleSearchKeyPress(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        searchTable();
     }
 }
