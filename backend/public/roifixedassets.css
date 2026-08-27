@@ -1814,3 +1814,129 @@ th:hover > .JColResizer::after {
 .search-btn i {
     font-size: 14px;
 }
+/* ========================================
+   STICKY HELP ICON - CỐ ĐỊNH KHI CUỘN
+   ======================================== */
+.help-sticky-icon {
+    position: sticky;
+    bottom: 50px;
+    float: right;
+    margin-right: 30px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #ffffff(210, 21%, 93%), #ffffff);
+    color: #00468b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    text-decoration: none;
+    box-shadow: 0 4px 20px rgba(31, 78, 120, 0.4);
+    z-index: 9999;
+    transition: all 0.3s ease;
+    
+    /* ✅ HIỆU ỨNG ĐẬP NHƯ MXH */
+    animation: pulse-ring 2s ease-in-out infinite;
+}
+
+/* Hiệu ứng rung/đập */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 20px rgba(244, 244, 245, 0.4);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 4px 40px rgba(229, 231, 233, 0.6);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 20px rgba(104, 137, 228, 0.4);
+    }
+}
+
+/* Vòng tròn lan tỏa */
+.help-sticky-icon::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    border-radius: 50%;
+    background: rgba(31, 78, 120, 0.15);
+    animation: ring-expand 2s ease-in-out infinite;
+    z-index: -1;
+}
+
+@keyframes ring-expand {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Vòng tròn lan tỏa thứ 2 */
+.help-sticky-icon::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background: rgba(37, 50, 231, 0.1);
+    animation: ring-expand-2 2s ease-in-out 0.5s infinite;
+    z-index: -1;
+}
+
+@keyframes ring-expand-2 {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Hover */
+.help-sticky-icon:hover {
+    animation: none;
+    transform: scale(1.15) rotate(10deg);
+    background: linear-gradient(135deg, #ffffff, #FFF);
+    box-shadow: 0 6px 35px #FFFF(14, 17, 209, 0.5);
+}
+
+.help-sticky-icon:hover::before,
+.help-sticky-icon:hover::after {
+    animation: none;
+    opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .help-sticky-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 24px;
+        bottom: 20px;
+        margin-right: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .help-sticky-icon {
+        width: 25px;
+        height: 25px;
+        font-size: 20px;
+        bottom: 15px;
+        margin-right: 15px;
+    }
+}
