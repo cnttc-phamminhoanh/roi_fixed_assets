@@ -5,56 +5,71 @@ class Database {
     constructor() {
         this.pool = null;
         this.isConnected = false;
+        this.connectionAttempts = 0;
+        this.maxRetries = 3;
     }
 
     // Tạo connection pool cho SQL Server
     async createPool() {
-        if (!this.pool) {
-            console.log('📝 Đang kết nối đến SQL Server...');
-            console.log(`   Host: ${config.db.host}`);
-            console.log(`   Port: ${config.db.port || 1433}`);
-            console.log(`   Database: ${config.db.database}`);
-            console.log(`   User: ${config.db.user}`);
-
-            try {
-                // Cấu hình kết nối SQL Server
-                const sqlConfig = {
-                    user: config.db.user,
-                    password: config.db.password,
-                    server: config.db.host,
-                    database: config.db.database,
-                    port: parseInt(config.db.port) || 1433,
-                    options: {
-                        encrypt: false, // Đặt true nếu dùng SSL
-                        trustServerCertificate: true,
-                        enableArithAbort: true,
-                        connectionTimeout: 30000,
-                        requestTimeout: 30000
-                    },
-                    pool: {
-                        max: config.db.connectionLimit || 10,
-                        min: 0,
-                        idleTimeoutMillis: 30000
-                    }
-                };
-
-                this.pool = await sql.connect(sqlConfig);
-                this.isConnected = true;
-                // Test query
-                const result = await this.pool.request().query('SELECT 1+1 AS result');
-                
-            } catch (err) {
-                this.isConnected = false;
-                this.pool = null;
-            }
+        if (this.pool && this.isConnected) {
+            return this.pool;
         }
-        return this.pool;
+
+        console.log('📝 Đang kết nối đến SQL Server...');
+        console.log(`   Host: ${config.db.host}`);
+        console.log(`   Port: ${config.db.port || 1433}`);
+        console.log(`   Database: ${config.db.database}`);
+        console.log(`   User: ${config.db.user}`);
+
+        try {
+            const sqlConfig = {
+                user: config.db.user,
+                password: config.db.password,
+                server: config.db.host,
+                database: config.db.database,
+                port: parseInt(config.db.port) || 1433,
+                options: {
+                    encrypt: false,
+                    trustServerCertificate: true,
+                    enableArithAbort: true,
+                    connectionTimeout: 30000,
+                    requestTimeout: 60000 // ✅ Tăng timeout cho query lớn
+                },
+                pool: {
+                    max: config.db.connectionLimit || 10,
+                    min: 0,
+                    idleTimeoutMillis: 30000
+                }
+            };
+
+            this.pool = await sql.connect(sqlConfig);
+            this.isConnected = true;
+            this.connectionAttempts = 0;
+            
+            console.log('✅ Kết nối SQL Server thành công!');
+            return this.pool;
+            
+        } catch (err) {
+            this.isConnected = false;
+            this.pool = null;
+            this.connectionAttempts++;
+            
+            console.error('❌ Lỗi kết nối SQL Server:', err.message);
+            
+            if (this.connectionAttempts < this.maxRetries) {
+                console.log(`🔄 Đang thử lại lần ${this.connectionAttempts + 1}/${this.maxRetries} sau 2s...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return this.createPool();
+            }
+            
+            throw err;
+        }
     }
 
     // Kiểm tra kết nối
     async testConnection() {
         try {
-            if (!this.pool) {
+            if (!this.pool || !this.isConnected) {
                 await this.createPool();
             }
             if (this.isConnected && this.pool) {
@@ -68,39 +83,40 @@ class Database {
         }
     }
 
-    // Execute query
-   // database.js - Sửa hàm executeQuery để hỗ trợ object params
-async executeQuery(sqlQuery, params = []) {
-    try {
-        if (!this.pool || !this.isConnected) {
-            await this.createPool();
-        }
-        
-        if (!this.isConnected || !this.pool) {
-            throw new Error('Database not connected');
-        }
+    // ✅ Execute query - Hỗ trợ cả array và object params
+    async executeQuery(sqlQuery, params = []) {
+        try {
+            if (!this.pool || !this.isConnected) {
+                await this.createPool();
+            }
+            
+            if (!this.isConnected || !this.pool) {
+                throw new Error('Database not connected');
+            }
 
-        const request = this.pool.request();
-        
-        // 👉 HỖ TRỢ CẢ ARRAY VÀ OBJECT
-        if (params && typeof params === 'object' && !Array.isArray(params)) {
-            // Nếu params là object { key: value }
-            Object.keys(params).forEach(key => {
-                request.input(key, params[key]);
-            });
-        } else if (Array.isArray(params) && params.length > 0) {
-            // Nếu params là array [value1, value2, ...]
-            params.forEach((param, index) => {
-                request.input(`p${index}`, param);
-            });
-        }
+            const request = this.pool.request();
+            
+            // Hỗ trợ cả array và object params
+            if (params && typeof params === 'object' && !Array.isArray(params)) {
+                Object.keys(params).forEach(key => {
+                    request.input(key, params[key]);
+                });
+            } else if (Array.isArray(params) && params.length > 0) {
+                params.forEach((param, index) => {
+                    request.input(`p${index}`, param);
+                });
+            }
 
-        const result = await request.query(sqlQuery);
-        return result.recordset;
-    } catch (err) {
-        throw err;
+            const result = await request.query(sqlQuery);
+            return result.recordset;
+            
+        } catch (err) {
+            console.error('❌ Query error:', err.message);
+            console.error('   SQL:', sqlQuery.substring(0, 200) + '...');
+            throw err;
+        }
     }
-}
+
     // Execute transaction
     async executeTransaction(queries) {
         try {
@@ -126,10 +142,27 @@ async executeQuery(sqlQuery, params = []) {
             
             await transaction.commit();
             return results;
+            
         } catch (err) {
             console.error('❌ Transaction error:', err.message);
+            try {
+                await transaction.rollback();
+            } catch (rollbackErr) {
+                console.error('❌ Rollback error:', rollbackErr.message);
+            }
             throw err;
         }
+    }
+
+    // ✅ Lấy thông tin kết nối
+    getConnectionInfo() {
+        return {
+            isConnected: this.isConnected,
+            host: config.db.host,
+            database: config.db.database,
+            user: config.db.user,
+            connectionAttempts: this.connectionAttempts
+        };
     }
 
     // Đóng kết nối
@@ -139,6 +172,7 @@ async executeQuery(sqlQuery, params = []) {
                 await this.pool.close();
                 this.pool = null;
                 this.isConnected = false;
+                console.log('✅ Đã đóng kết nối SQL Server');
             }
         } catch (err) {
             console.error('❌ Error closing connection:', err.message);

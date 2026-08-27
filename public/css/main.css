@@ -15,7 +15,7 @@ body {
 
 .container {
     max-width: 100%;
-    padding: 20px;
+    padding: 10px 10px 10px 10px;
 }
 
 /* ========================================
@@ -209,20 +209,27 @@ body {
 }
 
 /* ========================================
-   TABLE
+TABLE
    ======================================== */
 .table-container {
     background: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: 15px 15px 2px 15px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     overflow: hidden;
+    /* ✅ THÊM 3 DÒNG NÀY */
+    display: flex;
+    flex-direction: column;
+    min-height: 450px;
 }
 
 .table-wrapper {
     overflow-x: auto;
     max-height: 500px; 
     overflow-y: auto;
+     /* ✅ THÊM 2 DÒNG NÀY */
+    flex: 1;
+    min-height: 350px;
 }
 
 table {
@@ -284,6 +291,7 @@ thead th:not(:last-child) {
     color: #ffffff !important;
     border-radius: 10px;
     border-bottom: 2px solid #145a32 !important;
+    
 }
 
 /* Màu xanh lá nhạt cho các cột con của Budget */
@@ -918,212 +926,891 @@ tbody td.sticky-red {
 }
 
 /* ========================================
-   RESPONSIVE
+   RESPONSIVE - THỐNG NHẤT
    ======================================== */
+
+/* === DESKTOP LỚN (≥1400px) === */
 @media (min-width: 1400px) {
     .table-wrapper {
         overflow-x: auto;
-        max-height: 750px; 
+        max-height: 750px;
         overflow-y: auto;
     }
+    .table-container {
+    background: white;
+    border-radius: 12px;
+    padding: 15px 15px 2px 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 800px;
+}
 }
 
-@media (max-width: 1200px) {
+/* === DESKTOP VỪA (1200-1399px) === */
+@media (min-width: 1200px) and (max-width: 1399px) {
     .table-wrapper {
         overflow-x: auto;
-        max-height: 700px; 
+        max-height: 470px;
         overflow-y: auto;
     }
+    .container {
+    max-width: 100%;
+    padding: 15px 20px 20px 20px;
+}
+    .table-container {
+    background: white;
+    border-radius: 12px;
+    padding: 15px 15px 2px 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+}
 }
 
-@media (max-width: 768px) {
-    .container {
-        padding: 10px;
+/* === TABLET LỚN / DESKTOP NHỎ (992-1199px) === */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .table-wrapper {
+        overflow-x: auto;
+        max-height: 550px;
+        overflow-y: auto;
     }
-
-    .header-content {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-
-    .header-left {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .header-content h1 {
-        font-size: 22px;
-        white-space: normal;
-        text-align: center;
-    }
-
-    .header-right {
-        width: 100%;
-        margin-left: 0;
-    }
-
+    
     .search-wrapper {
-        min-width: 200px;
-        width: 100%;
+        min-width: 250px;
     }
+}
 
-    .summary-cards {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-
-    .card {
+/* === TABLET (768-991px) === */
+@media (max-width: 991px) {
+    .container {
         padding: 15px;
     }
-
-    .card-value {
-        font-size: 18px;
-    }
-
-    .table-wrapper {
-        max-height: 400px;
-    }
-
-    table {
-        font-size: 11px;
-        min-width: 1400px;
-    }
-
-    thead th,
-    tbody td {
-        padding: 8px 10px;
-    }
-
-    /* Responsive sticky columns */
-    .sticky-col:nth-child(3) {
-        min-width: 100px;
-        left: 180px;
-    }
-    .sticky-col:nth-child(4) {
-        min-width: 150px;
-        left: 280px;
-    }
-    .sticky-col:nth-child(5) {
-        min-width: 120px;
-        left: 430px;
-    }
-    .sticky-col:nth-child(6) {
-        min-width: 100px;
-        left: 550px;
-    }
-    .sticky-col:nth-child(7) {
-        min-width: 100px;
-        left: 650px;
-    }
-    .sticky-col:nth-child(8) {
-        min-width: 100px;
-        left: 750px;
-    }
-    .sticky-col:nth-child(9) {
-        min-width: 100px;
-        left: 850px;
-    }
-    .sticky-col:nth-child(10) {
-        min-width: 100px;
-        left: 950px;
-    }
-
-    .modal-box {
-        width: 95%;
-        margin: 10px;
-    }
-
-    .modal-header-simple h3 {
-        font-size: 16px;
-    }
-
-    .modal-body-simple {
-        padding: 18px;
-    }
-
-    .modal-footer-simple {
-        flex-direction: column-reverse;
-        padding: 12px 18px 18px;
-    }
-
-    .btn-cancel-simple,
-    .btn-submit-simple {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .header-left {
-        flex-direction: column;
+    
+    /* Header - Giữ 1 dòng */
+    .header-content {
+        display: flex;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between;
         align-items: center;
-        text-align: center;
+        gap: 10px;
     }
-
+    
+    .header-left {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    
     .header-logo {
         height: 35px;
     }
-
+    
     .header-content h1 {
         font-size: 18px;
+        white-space: nowrap;
+        text-align: left;
     }
-
+    
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 1;
+        min-width: 0;
+        margin-left: 0;
+    }
+    
     .search-wrapper {
-        min-width: 160px;
-        padding: 4px 10px;
+        min-width: 180px;
+        width: auto;
+        flex: 1;
     }
-
+    
     .search-input {
         font-size: 13px;
         padding: 8px 0;
         min-width: 100px;
     }
-
+    
+    .table-wrapper {
+        overflow-x: auto;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    table {
+        font-size: 12px;
+        min-width: 1400px;
+    }
+    
+    thead th,
+    tbody td {
+        padding: 8px 10px;
+    }
+    
     .summary-cards {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
-
+    
     .card {
-        padding: 12px 15px;
+        padding: 15px;
     }
-
-    .card-icon {
-        width: 40px;
-        height: 40px;
+    
+    .card-value {
         font-size: 18px;
     }
-
-    .card-value {
-        font-size: 16px;
-    }
-
+    
+    /* Modal */
     .modal-box {
-        width: 100%;
+        width: 95%;
         margin: 10px;
-        border-radius: 8px;
     }
-
-    .modal-header-simple {
-        padding: 14px 18px;
-    }
-
+    
     .modal-header-simple h3 {
         font-size: 16px;
     }
-
+    
     .modal-body-simple {
         padding: 18px;
     }
-
+    
     .modal-footer-simple {
-        padding: 12px 18px 18px;
         flex-direction: column-reverse;
+        padding: 12px 18px 18px;
     }
-
+    
     .btn-cancel-simple,
     .btn-submit-simple {
         width: 100%;
         justify-content: center;
     }
+}
+
+/* === MOBILE LỚN (576-767px) === */
+@media (max-width: 767px) {
+    .container {
+        padding: 10px;
+    }
+    
+    /* Header - Giữ 1 dòng */
+    .header-content {
+        gap: 8px;
+    }
+    
+    .header-left {
+        gap: 6px;
+    }
+    
+    .header-logo {
+        height: 28px;
+    }
+    
+    .header-content h1 {
+        font-size: 14px;
+    }
+    
+    .header-right {
+        gap: 6px;
+    }
+    
+    .search-wrapper {
+        min-width: 120px;
+        padding: 2px 6px;
+    }
+    
+    .search-input {
+        font-size: 12px;
+        padding: 6px 0;
+        min-width: 60px;
+    }
+    
+    .search-input::placeholder {
+        font-size: 11px;
+    }
+    
+    .search-icon {
+        font-size: 12px;
+        margin-right: 4px;
+    }
+    
+    .search-clear {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+    }
+    
+    .table-wrapper {
+        max-height: 400px;
+    }
+    
+    table {
+        font-size: 11px;
+        min-width: 1200px;
+    }
+    
+    thead th,
+    tbody td {
+        padding: 6px 8px;
+    }
+    
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .card {
+        padding: 12px;
+    }
+    
+    .card-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .card-value {
+        font-size: 16px;
+    }
+    
+    .card-content h3 {
+        font-size: 12px;
+    }
+}
+
+/* === MOBILE NHỎ (<576px) === */
+@media (max-width: 575px) {
+    .container {
+        padding: 8px;
+    }
+    
+    /* Header - Giữ 1 dòng */
+    .header-content {
+        gap: 5px;
+        padding: 0;
+    }
+    
+    .header-left {
+        gap: 4px;
+    }
+    
+    .header-logo {
+        height: 22px;
+    }
+    
+    .header-content h1 {
+        font-size: 11px;
+    }
+    
+    .header-right {
+        gap: 4px;
+    }
+    
+    .search-wrapper {
+        min-width: 80px;
+        padding: 2px 4px;
+        border-radius: 6px;
+    }
+    
+    .search-input {
+        font-size: 10px;
+        padding: 4px 0;
+        min-width: 40px;
+    }
+    
+    .search-input::placeholder {
+        font-size: 9px;
+    }
+    
+    .search-icon {
+        font-size: 10px;
+        margin-right: 3px;
+    }
+    
+    .search-clear {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+    
+    .table-wrapper {
+        max-height: 350px;
+    }
+    
+    table {
+        font-size: 10px;
+        min-width: 1000px;
+    }
+    
+    thead th,
+    tbody td {
+        padding: 4px 6px;
+    }
+    
+    .summary-cards {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    
+    .card {
+        padding: 10px;
+    }
+    
+    .card-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+    
+    .card-value {
+        font-size: 14px;
+    }
+    
+    .card-content h3 {
+        font-size: 11px;
+    }
+    
+    /* Modal */
+    .modal-box {
+        width: 100%;
+        margin: 10px;
+        border-radius: 8px;
+    }
+    
+    .modal-header-simple {
+        padding: 12px 16px;
+    }
+    
+    .modal-header-simple h3 {
+        font-size: 14px;
+    }
+    
+    .modal-body-simple {
+        padding: 14px;
+    }
+    
+    .modal-footer-simple {
+        padding: 10px 14px 14px;
+        flex-direction: column-reverse;
+    }
+    
+    .btn-cancel-simple,
+    .btn-submit-simple {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+}
+/* ========================================
+   FIX TABLE LAYOUT & COL RESIZE
+   ======================================== */
+
+/* ✅ Đảm bảo bảng có layout cố định */
+#roiTable {
+    table-layout: fixed !important;
+    width: max-content;
+    border-collapse: collapse;
+        /* ✅ THÊM DÒNG NÀY */
+    min-width: 1200px !important;
+}
+
+/* ✅ Đường kẻ cho bảng */
+#roiTable th,
+#roiTable td {
+    border: 1px solid #d0d0d0 !important;
+    padding: 5px 12px !important;
+    vertical-align: middle !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#roiTable thead th {
+    position: relative !important;
+    background-clip: padding-box;
+}
+
+/* ========================================
+   COLUMN RESIZE - CHỈ HIỆN KHI HOVER
+   ======================================== */
+
+/* ✅ Ẩn handle mặc định */
+.JColResizer {
+    position: absolute !important;
+    right: -5px !important;
+    top: 0 !important;
+    width: 10px !important;
+    height: 100% !important;
+    cursor: col-resize !important;
+    z-index: 10 !important;
+    background: transparent !important;
+    opacity: 0 !important;
+    transition: opacity 0.2s ease !important;
+    pointer-events: none !important;
+}
+
+/* ✅ Chỉ hiện handle khi hover vào chính cột đó */
+th:hover > .JColResizer {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* ✅ Khi đang kéo thì luôn hiện */
+.JColResizer.active {
+    opacity: 1 !important;
+    background: rgba(74, 144, 226, 0.15) !important;
+    pointer-events: auto !important;
+}
+
+/* ✅ Đường kẻ bên trong handle */
+.JColResizer::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 20px;
+    background: #bbb;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+/* ✅ Khi hover vào cột, đường kẻ sáng lên */
+th:hover > .JColResizer::after {
+    background: #4a90e2;
+    height: 30px;
+}
+
+/* ✅ Khi đang kéo, đường kẻ to và sáng */
+.JColResizer.active::after {
+    background: #4a90e2 !important;
+    height: 50px !important;
+}
+
+/* ✅ Khi đang kéo */
+.resizing-active {
+    user-select: none !important;
+    cursor: col-resize !important;
+}
+
+.resizing-active .JColResizer {
+    background: rgba(74, 144, 226, 0.25) !important;
+}
+
+.resizing-active .JColResizer::after {
+    background: #4a90e2 !important;
+    height: 60px !important;
+}
+
+.resizing-active table {
+    pointer-events: none;
+}
+
+/* ========================================
+   SEARCH RESULT COUNT
+   ======================================== */
+.search-result-count {
+    padding: 10px 15px;
+    background: #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #495057;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.search-result-count .count-info i {
+    color: #4a90e2;
+    margin-right: 8px;
+}
+
+.search-result-count .count-info strong {
+    color: #1a3c5e;
+}
+
+.search-result-count .clear-search-btn {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    font-size: 13px;
+    transition: color 0.2s;
+}
+
+.search-result-count .clear-search-btn:hover {
+    color: #dc3545;
+}
+
+/* ========================================
+   STATUS COLORS
+   ======================================== */
+.status-waiting-import {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+}
+
+.status-waiting-payback {
+    background-color: #cce5ff !important;
+    color: #004085 !important;
+}
+
+.status-waiting-benefit {
+    background-color: #d1ecf1 !important;
+    color: #0c5460 !important;
+}
+
+/* ========================================
+   DISABLED CELLS
+   ======================================== */
+.cell-disabled {
+    color: #999 !important;
+    cursor: not-allowed !important;
+    background-color: #f5f5f5 !important;
+}
+
+.cell-disabled:hover {
+    background-color: #f5f5f5 !important;
+    transform: none !important;
+}
+
+/* ========================================
+   CUSTOM SCROLLBAR
+   ======================================== */
+.table-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* ========================================
+   RESET COLUMNS BUTTON
+   ======================================== */
+.btn-reset-columns {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-reset-columns:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.02);
+}
+
+.btn-reset-columns i {
+    font-size: 14px;
+}/* ========================================
+   PAGINATION
+   ======================================== */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 5px 15px;
+    background: #ffffff;
+    border-radius: 0 0 12px 12px;
+    border-top: 1px solid #e9ecef;
+    margin-top: 0;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.pagination-info strong {
+    color: #1a3c5e;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    padding: 6px 14px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #e9ecef;
+    border-color: #ced4da;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.pagination-btn i {
+    font-size: 12px;
+}
+
+#pageNumbers {
+    display: flex;
+    gap: 4px;
+}
+
+.page-number-btn {
+    min-width: 25px;
+    height: 25px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.page-number-btn:hover:not(.active-page) {
+    background: #e9ecef;
+    border-color: #ced4da;
+}
+
+.page-number-btn.active-page {
+    background: #1F4E78;
+    color: white;
+    border-color: #1F4E78;
+}
+
+.page-number-btn.active-page:hover {
+    background: #1a3c5e;
+    border-color: #1a3c5e;
+}
+
+.pagination-rows {
+    font-size: 14px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pagination-rows select {
+    padding: 5px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    background: white;
+    color: #333;
+    outline: none;
+    transition: all 0.2s;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.pagination-rows select:focus {
+    border-color: #1F4E78;
+    box-shadow: 0 0 0 3px rgba(31, 78, 120, 0.1);
+}
+
+.pagination-rows select:hover {
+    border-color: #adb5bd;
+}
+
+.pagination-rows label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+/* ========================================
+   RESPONSIVE PAGINATION
+   ======================================== */
+@media (max-width: 992px) {
+    .pagination-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+    
+    .pagination-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .pagination-info {
+        text-align: center;
+        font-size: 13px;
+    }
+    
+    .pagination-rows {
+        justify-content: center;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 576px) {
+    .pagination-container {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+    
+    .pagination-btn {
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+    
+    .page-number-btn {
+        min-width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    
+    .pagination-rows select {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+    
+    .pagination-info {
+        font-size: 12px;
+    }
+    
+    #pageNumbers {
+        gap: 3px;
+    }
+}
+
+@media (max-width: 400px) {
+    .pagination-controls {
+        gap: 4px;
+    }
+    
+    .pagination-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+    
+    .page-number-btn {
+        min-width: 26px;
+        height: 26px;
+        font-size: 11px;
+    }
+    
+    .pagination-rows {
+        font-size: 11px;
+        flex-wrap: wrap;
+    }
+    
+    .pagination-rows select {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+}
+/* Ẩn handle trên cột cha (Budget và Actual) */
+.header-budget .JColResizer,
+.header-actual .JColResizer {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Chỉ hiển thị handle trên các cột con */
+.header-budget-light .JColResizer,
+.header-actual-light .JColResizer {
+    display: block !important;
+}
+/* Không dùng !important */
+#roiTable td:nth-child(4),
+#roiTable th:nth-child(4) {
+    width: 100px;
+    min-width: 50px;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* Ẩn handle kéo của cột Planned Results */
+/* #roiTable thead th:last-child .JColResizer,
+#roiTable thead th:last-child .col-resize-handle {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+} */
+/* ========================================
+   SEARCH BUTTON
+   ======================================== */
+.search-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #ffffff;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+.search-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.08);
+}
+
+.search-btn:active {
+    transform: scale(0.95);
+}
+
+.search-btn i {
+    font-size: 14px;
 }
