@@ -10,7 +10,6 @@ class ROIController {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 50;
             const search = req.query.search || '';
-            
             console.log(`📊 API: page=${page}, limit=${limit}, search="${search}"`);
             
             const result = await roiService.getROIData(page, limit, search);

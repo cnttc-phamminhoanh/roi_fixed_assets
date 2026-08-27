@@ -93,27 +93,27 @@
       <!-- ======================================== -->
       <div class="pagination-container">
         <div class="pagination-info">
-          <span id="paginationInfo">Hiển thị 1-50 trên tổng 0 bản ghi</span>
+          <span id="paginationInfo">Showing 1-50 of 0 records</span>
         </div>
         <div class="pagination-controls">
           <button class="pagination-btn" id="prevPage" onclick="changePage(-1)" disabled>
-            <i class="fas fa-chevron-left"></i> Trước
+            <i class="fas fa-chevron-left"></i> Previous
           </button>
           <span id="pageNumbers"></span>
           <button class="pagination-btn" id="nextPage" onclick="changePage(1)" disabled>
-            Sau <i class="fas fa-chevron-right"></i>
+            Next <i class="fas fa-chevron-right"></i>
           </button>
         </div>
         <div class="pagination-rows">
           <label>
-            Hiển thị
+            Show
             <select id="rowsPerPage" onchange="changeRowsPerPage()">
               <option value="50" selected>50</option>
               <option value="100">100</option>
               <option value="200">200</option>
               <option value="500">500</option>
             </select>
-            bản ghi
+            records
           </label>
         </div>
       </div>

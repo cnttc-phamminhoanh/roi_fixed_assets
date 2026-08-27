@@ -34,7 +34,7 @@ async function loadData(page = 1, keyword = '') {
         try {
             result = await response.json();
         } catch (parseError) {
-            throw new Error('Dữ liệu từ server không hợp lệ');
+            throw new Error('Invalid data received from server');
         }
         const data = result?.data || result || [];
         const total = result?.total || data.length || 0;
@@ -87,7 +87,7 @@ function renderTable(data) {
             <tr>
                 <td colspan="19" style="text-align:center;padding:40px;color:#999;">
                     <i class="fas fa-inbox" style="font-size:48px;display:block;margin-bottom:10px;"></i>
-                    Không có dữ liệu
+                    No data available
                 </td>
             </tr>
         `;
@@ -190,8 +190,8 @@ function updatePaginationControls(total) {
     const infoEl = document.getElementById('paginationInfo');
     if (infoEl) {
         infoEl.textContent = totalRecords > 0 
-            ? `Hiển thị ${start}-${end} trên tổng ${totalRecords} bản ghi`
-            : 'Không có dữ liệu';
+            ? `Showing ${start}-${end} of ${totalRecords} records`
+            : 'No data available';
     }
     
     const prevBtn = document.getElementById('prevPage');
@@ -363,21 +363,21 @@ function openBenefitModal(index) {
     
     if (!hasFinalReceiptDate) {
         showNotification(
-            '⛔ Không thể nhập Benefit vì chưa có ngày nhập hàng (Final Receipt Date)!', 
+            '⛔ Cannot enter Benefit because Final Receipt Date is not available!',
             'error'
         );
         return;
     }
     if (!hasEstimatedPaybackDate) {
         showNotification(
-            '⛔ Không thể nhập Benefit vì chưa có ngày hoàn vốn dự kiến (Estimated Payback Date)!', 
+             '⛔ Cannot enter Benefit because Estimated Payback Date is not available!',
             'error'
         );
         return;
     }
     if (actualAmount <= 0) {
         showNotification(
-            '⛔ Không thể nhập Benefit vì Actual Amount = 0. Vui lòng cập nhật số tiền thực tế trước!', 
+             '⛔ Cannot enter Benefit because Actual Amount = 0. Please update the actual amount first!',
             'error'
         );
         return;
@@ -423,7 +423,8 @@ async function saveBenefit() {
     const benefitValue = parseFloat(benefitInput.value);
     
     if (isNaN(benefitValue) || benefitValue < 0) {
-        showNotification('Vui lòng nhập giá trị lớn hơn hoặc bằng 0!', 'warning');
+        showNotification( 'Please enter a value greater than or equal to 0!',
+            'warning');
         benefitInput.focus();
         benefitInput.select();
         return;
@@ -438,7 +439,8 @@ async function saveBenefit() {
     
     // Kiểm tra phần nguyên (tối đa 10 chữ số)
     if (integerPart.replace('-', '').length > 10) {
-        showNotification('❌ Không được nhập quá 10 chữ số !', 'warning');
+        showNotification(  '❌ You cannot enter more than 10 digits!',
+            'warning');
         benefitInput.focus();
         benefitInput.select();
         return;
@@ -468,7 +470,8 @@ async function saveBenefit() {
         const result = await response.json();
 
         if (response.ok && result.success) {
-            showNotification('✅ Cập nhật benefit thành công!', 'success');
+            showNotification(  '✅ Benefit updated successfully!',
+                'success');
             closeBenefitModal();
             await loadData(currentPage, searchKeyword);
         } else {
@@ -505,7 +508,7 @@ async function saveBenefit() {
 function showNotification(message, type = 'info') {
     const container = document.getElementById('notificationContainer');
     if (!container) {
-        console.warn('⚠️ Không tìm thấy notificationContainer');
+        console.warn(  '⚠️ Notification container not found');
         return;
     }
     
@@ -521,11 +524,11 @@ function showNotification(message, type = 'info') {
         warning: 'fa-exclamation-triangle', 
         info: 'fa-info-circle' 
     };
-    const titles = { 
-        success: 'Thành công', 
-        error: 'Lỗi', 
-        warning: 'Cảnh báo', 
-        info: 'Thông báo' 
+    const titles = {
+        success: 'Success',
+        error: 'Error',
+        warning: 'Warning',
+        info: 'Information'
     };
 
     const notification = document.createElement('div');
@@ -533,7 +536,7 @@ function showNotification(message, type = 'info') {
     notification.innerHTML = `
         <div class="notification-icon"><i class="fas ${icons[type] || icons.info}"></i></div>
         <div class="notification-content">
-            <div class="notification-title">${titles[type] || 'Thông báo'}</div>
+            <div class="notification-title">${titles[type] || 'Information'}</div>
             <div class="notification-message">${message}</div>
         </div>
         <span class="notification-close" onclick="this.parentElement.remove()">&times;</span>
@@ -554,13 +557,15 @@ function showNotification(message, type = 'info') {
 // HÀM REFRESH & EXPORT
 // ========================================
 function refreshData() {
-    showNotification('Đang làm mới dữ liệu...', 'info');
+    showNotification(  'Refreshing data...',
+        'info');
     loadData(currentPage, searchKeyword);
 }
 
 function exportData() {
     if (!roiData || roiData.length === 0) {
-        showNotification('Không có dữ liệu để xuất!', 'warning');
+        showNotification( 'No data available to export!',
+            'warning');
         return;
     }
     
@@ -604,7 +609,8 @@ function exportData() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    showNotification('Đã xuất dữ liệu thành công!', 'success');
+    showNotification( 'Data exported successfully!',
+        'success');
 }
 
 // ========================================
@@ -763,7 +769,8 @@ function resetColumnWidths() {
         setTimeout(() => initColumnResize(), 200);
     }
     
-    showNotification('Đã reset độ rộng cột!', 'success');
+    showNotification(   'Column widths have been reset!',
+        'success');
 }
 
 // ========================================
@@ -794,7 +801,6 @@ document.addEventListener('keydown', function(event) {
 
 (function() {
     if (typeof $ !== 'undefined' && !$.fn.colResizable) {
-        console.log('🔧 Đang khởi tạo colResizable inline...');
         
         $.fn.colResizable = function(options) {
             const defaults = {
