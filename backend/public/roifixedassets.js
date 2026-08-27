@@ -488,7 +488,6 @@ async function saveBenefit() {
         } else {
             selectedItem.plannedResults = 'N/A';
         }
-        
         renderTable(roiData);
         closeBenefitModal();
     } finally {
