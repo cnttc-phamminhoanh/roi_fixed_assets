@@ -20,10 +20,13 @@
         <div class="header-left">
           <img src="../logo.png" alt="Logo" class="header-logo" />
           <h1>Asset Management Dashboard</h1>
+
         </div>
         <!-- 👉 Thêm div header-right để chứa search -->
         <div class="header-right">
+
           <div class="search-wrapper">
+
             <input type="text" id="searchInput" class="search-input" placeholder="Search by Asset Description"
               onkeypress="handleSearchKeyPress(event)" />
             <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none;">
@@ -33,7 +36,9 @@
             <button class="search-btn" onclick="searchTable()" title="Search">
               <i class="fas fa-search"></i>
             </button>
+
           </div>
+
         </div>
       </div>
     </header>
@@ -85,6 +90,7 @@
           </thead>
           <tbody id="tableBody">
             <!-- Dữ liệu sẽ được load từ JavaScript -->
+
           </tbody>
         </table>
       </div>
@@ -94,6 +100,7 @@
       <div class="pagination-container">
         <div class="pagination-info">
           <span id="paginationInfo">Showing 1-50 of 0 records</span>
+
         </div>
         <div class="pagination-controls">
           <button class="pagination-btn" id="prevPage" onclick="changePage(-1)" disabled>
@@ -115,6 +122,7 @@
             </select>
             records
           </label>
+
         </div>
       </div>
       <!-- ======================================== -->
@@ -167,7 +175,10 @@
   </div>
   <!-- ===== NOTIFICATION CONTAINER ===== -->
   <div id="notificationContainer"></div>
-
+  <a href="https://acncvghg5nzx.feishu.cn/docx/ZOcadaHPzodO3zxXrsjcLAd6nBe" target="_blank" class="help-sticky-icon"
+    title="Hướng dẫn sử dụng">
+    <i class="fas fa-question-circle"></i>
+  </a>
   <!-- ===== JAVASCRIPT ===== -->
   <script src="roifixedassets.js"></script>
 
