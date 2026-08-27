@@ -1,5 +1,6 @@
+// backend/src/config/database.js
 const sql = require('mssql');
-const config = require('./config');
+const config = require('./dataconfig');
 
 class Database {
     constructor() {
@@ -9,7 +10,6 @@ class Database {
         this.maxRetries = 3;
     }
 
-    // Tạo connection pool cho SQL Server
     async createPool() {
         if (this.pool && this.isConnected) {
             return this.pool;
@@ -33,7 +33,7 @@ class Database {
                     trustServerCertificate: true,
                     enableArithAbort: true,
                     connectionTimeout: 30000,
-                    requestTimeout: 60000 // ✅ Tăng timeout cho query lớn
+                    requestTimeout: 60000
                 },
                 pool: {
                     max: config.db.connectionLimit || 10,
@@ -66,7 +66,6 @@ class Database {
         }
     }
 
-    // Kiểm tra kết nối
     async testConnection() {
         try {
             if (!this.pool || !this.isConnected) {
@@ -83,7 +82,6 @@ class Database {
         }
     }
 
-    // ✅ Execute query - Hỗ trợ cả array và object params
     async executeQuery(sqlQuery, params = []) {
         try {
             if (!this.pool || !this.isConnected) {
@@ -96,7 +94,6 @@ class Database {
 
             const request = this.pool.request();
             
-            // Hỗ trợ cả array và object params
             if (params && typeof params === 'object' && !Array.isArray(params)) {
                 Object.keys(params).forEach(key => {
                     request.input(key, params[key]);
@@ -117,7 +114,6 @@ class Database {
         }
     }
 
-    // Execute transaction
     async executeTransaction(queries) {
         try {
             if (!this.pool || !this.isConnected) {
@@ -154,7 +150,6 @@ class Database {
         }
     }
 
-    // ✅ Lấy thông tin kết nối
     getConnectionInfo() {
         return {
             isConnected: this.isConnected,
@@ -165,7 +160,6 @@ class Database {
         };
     }
 
-    // Đóng kết nối
     async closePool() {
         try {
             if (this.pool) {
