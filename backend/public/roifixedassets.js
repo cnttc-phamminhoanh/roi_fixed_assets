@@ -584,7 +584,7 @@ function refreshData() {
     loadData(currentPage, searchKeyword);
 }
 
-// function exportData() {
+
 //     if (!roiData || roiData.length === 0) {
 //         showNotification( 'No data available to export!',
 //             'warning');
