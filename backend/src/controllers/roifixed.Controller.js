@@ -10,9 +10,18 @@ class ROIController {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 50;
             const search = req.query.search || '';
-            console.log(`📊 API: page=${page}, limit=${limit}, search="${search}"`);
+            const budgetROIFilter = req.query.budgetROIFilter === 'true';
+            // Final Receipt Date filter
+            const finalReceiptFilter =
+            req.query.finalReceiptFilter || '';
+
+        console.log(
+            `📊 API: page=${page}, limit=${limit}, search="${search}", ` +
+            `budgetROIFilter=${budgetROIFilter}, ` +
+            `finalReceiptFilter="${finalReceiptFilter}"`
+        );
             
-            const result = await roiService.getROIData(page, limit, search);
+            const result = await roiService.getROIData(page, limit, search,budgetROIFilter, finalReceiptFilter);
             
             res.json(result);
         } catch (error) {

@@ -5,9 +5,9 @@ class ROIService {
     /**
      * Lấy dữ liệu ROI với phân trang và tìm kiếm
      */
-    async getROIData(page = 1, limit = 50, search = '') {
+    async getROIData(page = 1, limit = 50, search = '', budgetROIFilter = false,finalReceiptFilter = '') {
         try {
-            const result = await roiRepository.getROIData(page, limit, search);
+            const result = await roiRepository.getROIData(page, limit, search,budgetROIFilter,finalReceiptFilter);
             
             // Transform dữ liệu
             const transformed = this.transformData(result.data);

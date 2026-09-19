@@ -39,96 +39,154 @@
 
           </div>
 
+
+
+          <div class="dropdown-wrapper">
+
+            <button class="dropdown-btn" id="dropdownBtn" onclick="toggleDropdown()">
+              <i class="fas fa-bars"></i>
+              Menu
+              <i class="fas fa-chevron-down dropdown-arrow"></i>
+            </button>
+
+            <div class="dropdown-menu" id="dropdownMenu">
+              <button onclick="exportData()">
+                <i class="fas fa-file-excel"></i>
+                Export Excel
+              </button>
+              <div class="roi-filter-group">
+
+                <span class="roi-filter-label">
+                  <i class="fas fa-filter"></i>
+                  ROI (Budget)
+                </span>
+
+                <button type="button" id="budgetRoiToggle" class="switch" onclick="toggleBudgetROI()"
+                  aria-label="Toggle Budget ROI filter">
+                  <span class="switch-track">
+                    <span class="switch-thumb"></span>
+                  </span>
+                </button>
+
+              </div>
+
+              <div class="dropdown-wrapper">
+                <button class="dropdown-btn" onclick="toggleFinalReceiptMenu(event)">
+                  <i class="fas fa-calendar-check"></i>
+                  Final Receipt Date
+                </button>
+
+                <div id="finalReceiptMenu" class="final-receipt-menu">
+                  <button type="button" onclick="filterFinalReceipt('not-null')">
+                    <i class="fas fa-check-circle"></i>
+                    Received
+                  </button>
+
+                  <button type="button" onclick="filterFinalReceipt('null')">
+                    <i class="fas fa-times-circle"></i>
+                    Not Received
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
+
+
+
+
+
       </div>
-    </header>
-    <!-- ===== MAIN TABLE ===== -->
-    <div class="table-container">
-      <div class="table-wrapper">
-        <table id="roiTable">
-          <thead>
-            <tr>
-              <!-- Header row 1 -->
-              <th rowspan="2" class="header-dark-blue" style="width: 50px; min-width: 50px;">#</th>
-              <th rowspan="2" class=" header-dark-blue">Department</th>
-              <th rowspan="2" class=" header-dark-blue">Asset Class</th>
-              <th rowspan="2" class=" header-dark-blue">Asset Description</th>
-              <th rowspan="2" class=" header-dark-blue">Purchase Reason</th>
-              <th rowspan="2" class=" header-dark-blue">Depreciation</th>
-              <th rowspan="2" class=" header-dark-blue">Request Date</th>
-              <th rowspan="2" class=" header-dark-blue">Final Receipt Date</th>
-              <th rowspan="2" class=" header-orange">Estimated Payback <br> Time (Y)</th>
-              <th rowspan="2" class=" header-orange">Estimated Payback<br> Date </th>
+  </div>
+  </header>
+  <!-- ===== MAIN TABLE ===== -->
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table id="roiTable">
+        <thead>
+          <tr>
+            <!-- Header row 1 -->
+            <th rowspan="2" class="header-dark-blue" style="width: 50px; min-width: 50px;">#</th>
+            <th rowspan="2" class=" header-dark-blue">Department</th>
+            <th rowspan="2" class=" header-dark-blue">Asset Class</th>
+            <th rowspan="2" class=" header-dark-blue">Asset Description</th>
+            <th rowspan="2" class=" header-dark-blue">Purchase Reason</th>
+            <th rowspan="2" class=" header-dark-blue">Depreciation</th>
+            <th rowspan="2" class=" header-dark-blue">Request Date</th>
+            <th rowspan="2" class=" header-dark-blue">Final Receipt Date</th>
+            <th rowspan="2" class=" header-orange">Estimated Payback <br> Time (Y)</th>
+            <th rowspan="2" class=" header-orange">Estimated Payback<br> Date </th>
 
-              <!-- Plan (PUT) Header -->
-              <th colspan="4" class="header-budget">Budget</th>
+            <!-- Plan (PUT) Header -->
+            <th colspan="4" class="header-budget">Budget</th>
 
-              <!-- Actual Header -->
-              <th colspan="4" class="header-actual">Actual</th>
+            <!-- Actual Header -->
+            <th colspan="4" class="header-actual">Actual</th>
 
-              <!-- Annual Totals -->
-              <th rowspan="2" class=" header-red">Planned Investment<br> Results</th>
+            <!-- Annual Totals -->
+            <th rowspan="2" class=" header-red">Planned Investment<br> Results</th>
 
-              <!-- <th rowspan="2" class="annual-total clickable-header" id="annualActualHeader">
+            <!-- <th rowspan="2" class="annual-total clickable-header" id="annualActualHeader">
                                 Annual Total (Actual)
                                 <i class="fas fa-edit" style="font-size: 12px;"></i>
                             </th> -->
-            </tr>
-            <tr>
-              <!-- Header row 2 - Plan -->
-              <th class="header-budget-light">Quantity</th>
-              <th class="header-budget-light">Amount $</th>
-              <th class="header-budget-light">Annual Total <br>Benefit $</th>
-              <th class="header-budget-light">% ROI</th>
+          </tr>
+          <tr>
+            <!-- Header row 2 - Plan -->
+            <th class="header-budget-light">Quantity</th>
+            <th class="header-budget-light">Amount $</th>
+            <th class="header-budget-light">Annual Total <br>Benefit $</th>
+            <th class="header-budget-light">% ROI</th>
 
-              <!-- Header row 2 - Actual -->
-              <th class="header-actual-light">Quantity</th>
-              <th class="header-actual-light">Amount $</th>
-              <th class="header-actual-light">Annual Total <br>Benefit $</th>
-              <th class="header-actual-light">% ROI</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <!-- Dữ liệu sẽ được load từ JavaScript -->
+            <!-- Header row 2 - Actual -->
+            <th class="header-actual-light">Quantity</th>
+            <th class="header-actual-light">Amount $</th>
+            <th class="header-actual-light">Annual Total <br>Benefit $</th>
+            <th class="header-actual-light">% ROI</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Dữ liệu sẽ được load từ JavaScript -->
 
-          </tbody>
-        </table>
-      </div>
-      <!-- ======================================== -->
-      <!-- ✅ PHÂN TRANG - ĐẶT Ở ĐÂY (SAU BẢNG)      -->
-      <!-- ======================================== -->
-      <div class="pagination-container">
-        <div class="pagination-info">
-          <span id="paginationInfo">Showing 1-50 of 0 records</span>
-
-        </div>
-        <div class="pagination-controls">
-          <button class="pagination-btn" id="prevPage" onclick="changePage(-1)" disabled>
-            <i class="fas fa-chevron-left"></i> Previous
-          </button>
-          <span id="pageNumbers"></span>
-          <button class="pagination-btn" id="nextPage" onclick="changePage(1)" disabled>
-            Next <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
-        <div class="pagination-rows">
-          <label>
-            Show
-            <select id="rowsPerPage" onchange="changeRowsPerPage()">
-              <option value="50" selected>50</option>
-              <option value="100">100</option>
-              <option value="200">200</option>
-              <option value="500">500</option>
-            </select>
-            records
-          </label>
-
-        </div>
-      </div>
-      <!-- ======================================== -->
-      <!-- KẾT THÚC PHÂN TRANG                        -->
-      <!-- ======================================== -->
+        </tbody>
+      </table>
     </div>
+    <!-- ======================================== -->
+    <!-- ✅ PHÂN TRANG - ĐẶT Ở ĐÂY (SAU BẢNG)      -->
+    <!-- ======================================== -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        <span id="paginationInfo">Showing 1-50 of 0 records</span>
+
+      </div>
+      <div class="pagination-controls">
+        <button class="pagination-btn" id="prevPage" onclick="changePage(-1)" disabled>
+          <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <span id="pageNumbers"></span>
+        <button class="pagination-btn" id="nextPage" onclick="changePage(1)" disabled>
+          Next <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      <div class="pagination-rows">
+        <label>
+          Show
+          <select id="rowsPerPage" onchange="changeRowsPerPage()">
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="500">500</option>
+          </select>
+          records
+        </label>
+
+      </div>
+    </div>
+    <!-- ======================================== -->
+    <!-- KẾT THÚC PHÂN TRANG                        -->
+    <!-- ======================================== -->
+  </div>
   </div>
 
   <!-- ===== LOADING OVERLAY ===== -->
@@ -179,6 +237,9 @@
     title="Hướng dẫn sử dụng">
     <i class="fas fa-question-circle"></i>
   </a>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
+
   <!-- ===== JAVASCRIPT ===== -->
   <script src="roifixedassets.js"></script>
 

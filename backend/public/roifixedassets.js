@@ -9,6 +9,8 @@ const sampleData = [];
 let roiData = [];
 let selectedItem = null;
 let searchKeyword = '';
+let budgetROIFilter = false;
+let finalReceiptFilter = '';
 // ========================================
 // PAGINATION - BIẾN TOÀN CỤC
 // ========================================
@@ -26,6 +28,12 @@ async function loadData(page = 1, keyword = '') {
         if (keyword) {
             url += `&search=${encodeURIComponent(keyword)}`;
         }
+        if (budgetROIFilter) {
+            url += `&budgetROIFilter=true`;
+        }
+        if (finalReceiptFilter) {
+    url += `&finalReceiptFilter=${finalReceiptFilter}`;
+}
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -57,11 +65,7 @@ async function loadData(page = 1, keyword = '') {
         renderTable(roiData);
         updatePaginationControls(total);
         
-        // if (roiData.length > 0) {
-        //     showNotification(`Đã tải ${roiData.length} bản ghi`, 'success');
-        // } else {
-        //     showNotification('Không có dữ liệu!', 'warning');
-        // }
+  
         
     } catch (error) {
         roiData = [];
@@ -109,11 +113,11 @@ function renderTable(data) {
         'Budget Quantity': 70,
         'Budget Amount': 110,
         'Budget Benefit': 110,
-        'Budget ROI': 80,
+        'Budget ROI': 120,
         'Actual Quantity': 70,
         'Actual Amount': 110,
         'Actual Benefit': 110,
-        'Actual ROI': 80,
+        'Actual ROI': 120,
         'Planned Results': 130
     };
 
@@ -553,6 +557,24 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+function toggleBudgetROI() {
+    budgetROIFilter = !budgetROIFilter;
+
+    const toggle = document.getElementById('budgetRoiToggle');
+
+    if (budgetROIFilter) {
+        toggle.classList.add('active');
+        currentPage = 1;
+        showNotification('Budget ROI > 0: ON', 'info');
+    } else {
+        toggle.classList.remove('active');
+        currentPage = 1;
+        showNotification('Budget ROI filter: OFF', 'info');
+    }
+
+    loadData(1, searchKeyword);
+}
+
 // ========================================
 // HÀM REFRESH & EXPORT
 // ========================================
@@ -562,60 +584,555 @@ function refreshData() {
     loadData(currentPage, searchKeyword);
 }
 
-function exportData() {
-    if (!roiData || roiData.length === 0) {
-        showNotification( 'No data available to export!',
-            'warning');
-        return;
-    }
+// function exportData() {
+//     if (!roiData || roiData.length === 0) {
+//         showNotification( 'No data available to export!',
+//             'warning');
+//         return;
+//     }
     
-    const headers = ['Department', 'Asset Class', 'Asset Description', 'Purchase Reason', 
-                    'Depreciation', 'Request Date', 'Final Receipt Date', 
-                    'Est. Payback Time', 'Est. Payback Date',
-                    'Budget Qty', 'Budget Amount', 'Budget Benefit', 'Budget ROI %',
-                    'Actual Qty', 'Actual Amount', 'Actual Benefit', 'Actual ROI %',
-                    'Planned Results'];
+//     const headers = ['Department', 'Asset Class', 'Asset Description', 'Purchase Reason', 
+//                     'Depreciation', 'Request Date', 'Final Receipt Date', 
+//                     'Est. Payback Time', 'Est. Payback Date',
+//                     'Budget Qty', 'Budget Amount', 'Budget Benefit', 'Budget ROI %',
+//                     'Actual Qty', 'Actual Amount', 'Actual Benefit', 'Actual ROI %',
+//                     'Planned Results'];
     
-    const rows = roiData.map((item) => [
-        item.department || '',
-        item.assetClass || '',
-        item.assetDescription || '',
-        item.purchaseReason || '',
-        item.depreciation || '',
-        formatDate(item.requestDate),
-        formatDate(item.finalReceiptDate),
-        item.estimatedPaybackTime || 0,
-        formatDate(item.estimatedPaybackDate),
-        item.budgetQuantity || 0,
-        item.budgetAmount || 0,
-        item.budgetBenefit || 0,
-        item.budgetROI ? item.budgetROI.toFixed(1) : 0,
-        item.actualQuantity || 0,
-        item.actualAmount || 0,
-        item.actualBenefit || 0,
-        item.actualROI ? item.actualROI.toFixed(1) : 0,
-        item.plannedResults || 'N/A'
-    ]);
+//     const rows = roiData.map((item) => [
+//         item.department || '',
+//         item.assetClass || '',
+//         item.assetDescription || '',
+//         item.purchaseReason || '',
+//         item.depreciation || '',
+//         formatDate(item.requestDate),
+//         formatDate(item.finalReceiptDate),
+//         item.estimatedPaybackTime || 0,
+//         formatDate(item.estimatedPaybackDate),
+//         item.budgetQuantity || 0,
+//         item.budgetAmount || 0,
+//         item.budgetBenefit || 0,
+//         item.budgetROI ? item.budgetROI.toFixed(1) : 0,
+//         item.actualQuantity || 0,
+//         item.actualAmount || 0,
+//         item.actualBenefit || 0,
+//         item.actualROI ? item.actualROI.toFixed(1) : 0,
+//         item.plannedResults || 'N/A'
+//     ]);
     
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+//     const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.href = url;
-    link.setAttribute('download', `roi_data_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+//     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+//     const link = document.createElement('a');
+//     const url = URL.createObjectURL(blob);
+//     link.href = url;
+//     link.setAttribute('download', `roi_data_${new Date().toISOString().split('T')[0]}.csv`);
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+//     URL.revokeObjectURL(url);
     
-    showNotification( 'Data exported successfully!',
-        'success');
-}
+//     showNotification( 'Data exported successfully!',
+//         'success');
+// }
 
 // ========================================
 // HÀM CHUẨN HÓA TIẾNG VIỆT (BỎ DẤU)
 // ========================================
+function exportData() {
+
+    // Không có dữ liệu
+    if (!roiData || roiData.length === 0) {
+        showNotification('No data available to export!', 'warning');
+        return;
+    }
+
+    // Kiểm tra thư viện Excel
+    if (typeof XLSX === 'undefined') {
+        showNotification('Excel library is not loaded!', 'error');
+        return;
+    }
+
+    try {
+
+        // ========================================
+        // HEADER GIỐNG TRÊN WEB
+        // ========================================
+
+        const excelData = [
+
+            // Header dòng 1
+            [
+                '#',
+                'Department',
+                'Asset Class',
+                'Asset Description',
+                'Purchase Reason',
+                'Depreciation',
+                'Request Date',
+                'Final Receipt Date',
+                'Estimated Payback Time (Y)',
+                'Estimated Payback Date',
+                'Budget',
+                '',
+                '',
+                '',
+                'Actual',
+                '',
+                '',
+                '',
+                'Planned Investment Results'
+            ],
+
+            // Header dòng 2
+            [
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                'Quantity',
+                'Amount $',
+                'Annual Total Benefit $',
+                '% ROI',
+                'Quantity',
+                'Amount $',
+                'Annual Total Benefit $',
+                '% ROI',
+                ''
+            ]
+        ];
+
+
+        // ========================================
+        // DỮ LIỆU ĐANG HIỂN THỊ TRÊN WEB
+        // ========================================
+
+        roiData.forEach((item, index) => {
+
+            const budgetROI = parseFloat(item.budgetROI) || 0;
+            const actualROI = parseFloat(item.actualROI) || 0;
+
+            // Giống logic hiển thị trên web
+            const budgetROIText =
+                item.budgetROI && item.budgetROI !== 0
+                    ? item.budgetROI.toFixed(1) + '%'
+                    : '-';
+
+            const actualROIText =
+                item.actualROI && item.actualROI !== 0
+                    ? item.actualROI.toFixed(1) + '%'
+                    : '-';
+
+
+            const budgetBenefitText =
+                item.budgetBenefit && item.budgetBenefit !== 0
+                    ? formatNumber(item.budgetBenefit)
+                    : '-';
+
+
+            const actualBenefitText =
+                item.actualBenefit !== undefined &&
+                item.actualBenefit !== null
+                    ? formatNumber(item.actualBenefit)
+                    : '$0.00';
+
+
+            // PASS / NOT PASS
+            let plannedResultText = '-';
+
+            if (actualROI > 0 && budgetROI > 0) {
+
+                if (actualROI >= budgetROI) {
+                    plannedResultText = '✅ PASS';
+                } else {
+                    plannedResultText = '❌ NOT PASS';
+                }
+
+            }
+
+
+            // ========================================
+            // THÊM 1 DÒNG EXCEL
+            // ========================================
+
+            excelData.push([
+
+                // #
+                index + 1,
+
+                // Department
+                item.department || '-',
+
+                // Asset Class
+                item.assetClass || '-',
+
+                // Asset Description
+                item.assetDescription || '-',
+
+                // Purchase Reason
+                item.purchaseReason || '-',
+
+                // Depreciation
+                item.depreciation || '-',
+
+                // Request Date
+                formatDate(item.requestDate),
+
+                // Final Receipt Date
+                formatDate(item.finalReceiptDate),
+
+                // Estimated Payback Time
+                formatPaybackTime(item.estimatedPaybackTime),
+
+                // Estimated Payback Date
+                formatDate(item.estimatedPaybackDate),
+
+                // Budget Quantity
+                item.budgetQuantity || 0,
+
+                // Budget Amount
+                formatNumber(item.budgetAmount),
+
+                // Budget Annual Total Benefit
+                budgetBenefitText,
+
+                // Budget ROI
+                budgetROIText,
+
+                // Actual Quantity
+                item.actualQuantity || 0,
+
+                // Actual Amount
+                formatNumber(item.actualAmount),
+
+                // Actual Annual Total Benefit
+                actualBenefitText,
+
+                // Actual ROI
+                actualROIText,
+
+                // Planned Investment Results
+                plannedResultText
+            ]);
+        });
+
+
+        // ========================================
+        // TẠO WORKSHEET
+        // ========================================
+
+        const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+        // ========================================
+// STYLE HEADER GIỐNG GIAO DIỆN WEB
+// ========================================
+
+const headerDarkBlue = {
+    fill: {
+        patternType: 'solid',
+        fgColor: { rgb: '1F4E78' }
+    },
+    font: {
+        bold: true,
+        color: { rgb: 'FFFFFF' }
+    },
+    alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+        wrapText: true
+    },
+    border: {
+        top: { style: 'thin', color: { rgb: 'FFFFFF' } },
+        bottom: { style: 'thin', color: { rgb: 'FFFFFF' } },
+        left: { style: 'thin', color: { rgb: 'FFFFFF' } },
+        right: { style: 'thin', color: { rgb: 'FFFFFF' } }
+    }
+};
+
+const headerOrange = {
+    fill: {
+        patternType: 'solid',
+        fgColor: { rgb: 'ED7D31' }
+    },
+    font: {
+        bold: true,
+        color: { rgb: 'FFFFFF' }
+    },
+    alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+        wrapText: true
+    },
+    border: {
+        top: { style: 'thin', color: { rgb: 'FFFFFF' } },
+        bottom: { style: 'thin', color: { rgb: 'FFFFFF' } },
+        left: { style: 'thin', color: { rgb: 'FFFFFF' } },
+        right: { style: 'thin', color: { rgb: 'FFFFFF' } }
+    }
+};
+
+const headerBudget = {
+    fill: {
+        patternType: 'solid',
+        fgColor: { rgb: '70AD47' }
+    },
+    font: {
+        bold: true,
+        color: { rgb: 'FFFFFF' }
+    },
+    alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+        wrapText: true
+    }
+};
+
+const headerBudgetLight = {
+    fill: {
+        patternType: 'solid',
+        fgColor: { rgb: 'C6E0B4' }
+    },
+    font: {
+        bold: true,
+        color: { rgb: '000000' }
+    },
+    alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+        wrapText: true
+    }
+};
+
+const headerActual = {
+    fill: {
+        patternType: 'solid',
+        fgColor: { rgb: 'FFCC33' }
+    },
+    font: {
+        bold: true,
+        color: { rgb: '000000' }
+    },
+    alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+        wrapText: true
+    }
+};
+
+const headerActualLight = {
+    fill: {
+        patternType: 'solid',
+        fgColor: { rgb: 'FFF5A5' }
+    },
+    font: {
+        bold: true,
+        color: { rgb: '000000' }
+    },
+    alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+        wrapText: true
+    }
+};
+
+const headerRed = {
+    fill: {
+        patternType: 'solid',
+        fgColor: { rgb: 'C00000' }
+    },
+    font: {
+        bold: true,
+        color: { rgb: 'FFFFFF' }
+    },
+    alignment: {
+        horizontal: 'center',
+        vertical: 'center',
+        wrapText: true
+    }
+};
+
+// ========================================
+// ÁP DỤNG MÀU CHO HEADER
+// ========================================
+
+// Dòng header chính
+for (let col = 0; col <= 9; col++) {
+    const cell = worksheet[
+        XLSX.utils.encode_cell({ r: 0, c: col })
+    ];
+
+    if (cell) {
+        cell.s = col === 8 || col === 9
+            ? headerOrange
+            : headerDarkBlue;
+    }
+}
+
+// Budget
+worksheet['K1'].s = headerBudget;
+worksheet['L1'].s = headerBudget;
+worksheet['M1'].s = headerBudget;
+worksheet['N1'].s = headerBudget;
+
+for (let col = 10; col <= 13; col++) {
+    const cell = worksheet[
+        XLSX.utils.encode_cell({ r: 1, c: col })
+    ];
+
+    if (cell) {
+        cell.s = headerBudgetLight;
+    }
+}
+
+// Actual
+worksheet['O1'].s = headerActual;
+worksheet['P1'].s = headerActual;
+worksheet['Q1'].s = headerActual;
+worksheet['R1'].s = headerActual;
+
+for (let col = 14; col <= 17; col++) {
+    const cell = worksheet[
+        XLSX.utils.encode_cell({ r: 1, c: col })
+    ];
+
+    if (cell) {
+        cell.s = headerActualLight;
+    }
+}
+
+// Planned Investment Results
+worksheet['S1'].s = headerRed;
+
+
+        // ========================================
+        // MERGE HEADER GIỐNG TABLE WEB
+        // ========================================
+
+        worksheet['!merges'] = [
+
+            // # 
+            { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
+
+            // Department
+            { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },
+
+            // Asset Class
+            { s: { r: 0, c: 2 }, e: { r: 1, c: 2 } },
+
+            // Asset Description
+            { s: { r: 0, c: 3 }, e: { r: 1, c: 3 } },
+
+            // Purchase Reason
+            { s: { r: 0, c: 4 }, e: { r: 1, c: 4 } },
+
+            // Depreciation
+            { s: { r: 0, c: 5 }, e: { r: 1, c: 5 } },
+
+            // Request Date
+            { s: { r: 0, c: 6 }, e: { r: 1, c: 6 } },
+
+            // Final Receipt Date
+            { s: { r: 0, c: 7 }, e: { r: 1, c: 7 } },
+
+            // Estimated Payback Time
+            { s: { r: 0, c: 8 }, e: { r: 1, c: 8 } },
+
+            // Estimated Payback Date
+            { s: { r: 0, c: 9 }, e: { r: 1, c: 9 } },
+
+            // Budget
+            { s: { r: 0, c: 10 }, e: { r: 0, c: 13 } },
+
+            // Actual
+            { s: { r: 0, c: 14 }, e: { r: 0, c: 17 } },
+
+            // Planned Investment Results
+            { s: { r: 0, c: 18 }, e: { r: 1, c: 18 } }
+        ];
+
+
+        // ========================================
+        // ĐỘ RỘNG CỘT
+        // ========================================
+
+        worksheet['!cols'] = [
+            { wch: 6 },   // #
+            { wch: 18 },  // Department
+            { wch: 18 },  // Asset Class
+            { wch: 35 },  // Asset Description
+            { wch: 28 },  // Purchase Reason
+            { wch: 16 },  // Depreciation
+            { wch: 22 },  // Request Date
+            { wch: 22 },  // Final Receipt Date
+            { wch: 28 },  // Estimated Payback Time
+            { wch: 24 },  // Estimated Payback Date
+
+            { wch: 14 },  // Budget Quantity
+            { wch: 18 },  // Budget Amount
+            { wch: 25 },  // Budget Benefit
+            { wch: 14 },  // Budget ROI
+
+            { wch: 14 },  // Actual Quantity
+            { wch: 18 },  // Actual Amount
+            { wch: 25 },  // Actual Benefit
+            { wch: 14 },  // Actual ROI
+
+            { wch: 28 }   // Planned Results
+        ];
+
+
+        // ========================================
+        // TẠO WORKBOOK
+        // ========================================
+
+        const workbook = XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            worksheet,
+            'ROI Asset Data'
+        );
+
+
+        // ========================================
+        // TÊN FILE
+        // ========================================
+
+        const today = new Date()
+            .toISOString()
+            .split('T')[0];
+
+        const fileName = `roi_data_${today}.xlsx`;
+
+
+        // ========================================
+        // DOWNLOAD EXCEL
+        // ========================================
+
+        XLSX.writeFile(workbook, fileName,{cellStyles: true});
+
+
+        showNotification(
+            'Excel file exported successfully!',
+            'success'
+        );
+
+
+    } catch (error) {
+
+        console.error('Export Excel error:', error);
+
+        showNotification(
+            'Failed to export Excel file!',
+            'error'
+        );
+    }
+}
+
 function removeVietnameseTones(str) {
     if (!str) return '';
     
@@ -895,4 +1412,82 @@ function handleSearchKeyPress(event) {
         event.preventDefault();
         searchTable();
     }
+}
+
+
+
+
+// ================================
+// DROPDOWN MENU
+// ================================
+
+function toggleDropdown() {
+
+    const menu = document.getElementById("dropdownMenu");
+    const button = document.getElementById("dropdownBtn");
+
+    menu.classList.toggle("show");
+    button.classList.toggle("active");
+}
+
+
+// Click ra bên ngoài thì đóng menu
+document.addEventListener("click", function (event) {
+
+    const wrapper = document.querySelector(".dropdown-wrapper");
+
+    if (!wrapper.contains(event.target)) {
+
+        document.getElementById("dropdownMenu").classList.remove("show");
+        document.getElementById("dropdownBtn").classList.remove("active");
+
+    }
+
+});
+
+function toggleFinalReceiptMenu(event) {
+    event.stopPropagation();
+
+    const menu = document.getElementById('finalReceiptMenu');
+
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+// Click ra ngoài menu → tự đóng
+document.addEventListener('click', function () {
+    const menu = document.getElementById('finalReceiptMenu');
+
+    if (menu) {
+        menu.classList.remove('show');
+    }
+});
+
+// Click bên trong menu → không làm event lan ra document
+document.getElementById('finalReceiptMenu')?.addEventListener('click', function (event) {
+    event.stopPropagation();
+});
+
+function filterFinalReceipt(type) {
+    const menu = document.getElementById('finalReceiptMenu');
+
+    if (menu) {
+        menu.classList.remove('show');
+    }
+    finalReceiptFilter = type;
+    currentPage = 1;
+    if (type === 'not-null') {
+        showNotification(
+            'Filtering Final Receipt Date: Not Null...',
+            'info'
+        );
+    } else if (type === 'null') {
+        showNotification(
+            'Filtering Final Receipt Date: Null...',
+            'info'
+        );
+    }
+
+    loadData(1, searchKeyword);
 }
