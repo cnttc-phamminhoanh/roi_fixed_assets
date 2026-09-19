@@ -447,7 +447,6 @@ thead th:not(:last-child) {
     min-width: 150px;
 }
 
-
 /* ========================================
    TABLE BODY
    ======================================== */
@@ -1671,7 +1670,6 @@ tbody td.sticky-red {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-
 /* ========================================
    SEARCH BUTTON
    ======================================== */
