@@ -286,16 +286,7 @@ async getROIData(
             FETCH NEXT ${limit} ROWS ONLY
         `;
 
-        // ========================================
-        // 7. COUNT QUERY
-        //
-        // Phải dùng cùng:
-        // WHERE
-        // GROUP BY
-        // HAVING
-        //
-        // với query chính.
-        // ========================================
+
         const countQuery = `
             SELECT COUNT(*) AS total
 
@@ -369,18 +360,6 @@ async getROIData(
             ) AS filtered_data
         `;
 
-        // ========================================
-        // 8. DEBUG
-        // ========================================
-        console.log('========================================');
-        console.log('ROI DATA FILTER');
-        console.log('page:', page);
-        console.log('limit:', limit);
-        console.log('offset:', offset);
-        console.log('search:', search);
-        console.log('budgetROIFilter:', budgetROIFilter);
-        console.log('finalReceiptFilter:', finalReceiptFilter);
-        console.log('========================================');
 
         // ========================================
         // 9. EXECUTE
@@ -425,7 +404,7 @@ async getROIData(
      */
     async updateActualBenefit(planNo, planId, benefitValue) {
         try {
-            console.log(`📝 updateActualBenefit - planNo: ${planNo}, planId: ${planId}, benefit: ${benefitValue}`);
+          
             
             if (!database.isConnected) {
                 await database.testConnection();
@@ -460,7 +439,7 @@ async getROIData(
                 affectedRows = result.affectedRows;
             }
 
-            console.log(`✅ updateActualBenefit - ${affectedRows} dòng bị ảnh hưởng`);
+       
             
             return {
                 success: true,
