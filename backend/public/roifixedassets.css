@@ -225,9 +225,8 @@ TABLE
 
 .table-wrapper {
     overflow-x: auto;
-    max-height: 500px; 
+    max-height: 500px;
     overflow-y: auto;
-     /* ✅ THÊM 2 DÒNG NÀY */
     flex: 1;
     min-height: 350px;
 }
@@ -289,7 +288,7 @@ thead th:not(:last-child) {
 .header-budget {
     background: #548235 !important;
     color: #ffffff !important;
-    border-radius: 10px;
+    border-radius: 10px 0px 0px;
     border-bottom: 2px solid #145a32 !important;
     
 }
@@ -298,7 +297,7 @@ thead th:not(:last-child) {
 .header-budget-light {
     background: #E2EFDA !important;
     color: #1a4d2e !important;
-    border-radius: 10px;
+    /* border-radius: 10px; */
     border-bottom: 2px solid #58d68d !important;
 }
 
@@ -306,7 +305,7 @@ thead th:not(:last-child) {
 .header-actual {
     background: #FFCC33 !important;
     color: #08080c !important;
-    border-radius: 10px;
+    /* border-radius: 10px; */
     border-bottom: 2px solid #9a7d0a !important;
 }
 
@@ -314,7 +313,7 @@ thead th:not(:last-child) {
 .header-actual-light {
     background: #fff5a5 !important;
     color: #212529 !important;
-    border-radius: 10px;
+    /* border-radius: 10px; */
     border-bottom: 2px solid #dfe13f !important;
 }
 
@@ -323,7 +322,7 @@ thead th:not(:last-child) {
 .header-red {
     background: #FF0000 !important;
     color: #ffffff !important;
-    border-radius: 10px;
+    /* border-radius: 0px 10px 0px 0px; */
     border-bottom: 2px solid #641e16 !important;
 }
 
@@ -1309,110 +1308,8 @@ tbody td.sticky-red {
         font-size: 12px;
     }
 }
-/* ========================================
-   FIX TABLE LAYOUT & COL RESIZE
-   ======================================== */
 
-/* ✅ Đảm bảo bảng có layout cố định */
-#roiTable {
-    table-layout: fixed !important;
-    width: max-content;
-    border-collapse: collapse;
-        /* ✅ THÊM DÒNG NÀY */
-    min-width: 1200px !important;
-}
 
-/* ✅ Đường kẻ cho bảng */
-#roiTable th,
-#roiTable td {
-    border: 1px solid #d0d0d0 !important;
-    padding: 5px 12px !important;
-    vertical-align: middle !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#roiTable thead th {
-    position: relative !important;
-    background-clip: padding-box;
-}
-
-/* ========================================
-   COLUMN RESIZE - CHỈ HIỆN KHI HOVER
-   ======================================== */
-
-/* ✅ Ẩn handle mặc định */
-.JColResizer {
-    position: absolute !important;
-    right: -5px !important;
-    top: 0 !important;
-    width: 10px !important;
-    height: 100% !important;
-    cursor: col-resize !important;
-    z-index: 10 !important;
-    background: transparent !important;
-    opacity: 0 !important;
-    transition: opacity 0.2s ease !important;
-    pointer-events: none !important;
-}
-
-/* ✅ Chỉ hiện handle khi hover vào chính cột đó */
-th:hover > .JColResizer {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
-/* ✅ Khi đang kéo thì luôn hiện */
-.JColResizer.active {
-    opacity: 1 !important;
-    background: rgba(74, 144, 226, 0.15) !important;
-    pointer-events: auto !important;
-}
-
-/* ✅ Đường kẻ bên trong handle */
-.JColResizer::after {
-    content: '';
-    position: absolute;
-    right: 3px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 2px;
-    height: 20px;
-    background: #bbb;
-    border-radius: 2px;
-    transition: all 0.3s ease;
-}
-
-/* ✅ Khi hover vào cột, đường kẻ sáng lên */
-th:hover > .JColResizer::after {
-    background: #4a90e2;
-    height: 30px;
-}
-
-/* ✅ Khi đang kéo, đường kẻ to và sáng */
-.JColResizer.active::after {
-    background: #4a90e2 !important;
-    height: 50px !important;
-}
-
-/* ✅ Khi đang kéo */
-.resizing-active {
-    user-select: none !important;
-    cursor: col-resize !important;
-}
-
-.resizing-active .JColResizer {
-    background: rgba(74, 144, 226, 0.25) !important;
-}
-
-.resizing-active .JColResizer::after {
-    background: #4a90e2 !important;
-    height: 60px !important;
-}
-
-.resizing-active table {
-    pointer-events: none;
-}
 
 /* ========================================
    SEARCH RESULT COUNT
@@ -1773,16 +1670,6 @@ th:hover > .JColResizer::after {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-/* Ẩn handle kéo của cột Planned Results */
-/* #roiTable thead th:last-child .JColResizer,
-#roiTable thead th:last-child .col-resize-handle {
-    display: none !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
-    width: 0 !important;
-    height: 0 !important;
-} */
 /* ========================================
    SEARCH BUTTON
    ======================================== */
@@ -1939,4 +1826,1151 @@ th:hover > .JColResizer::after {
         bottom: 15px;
         margin-right: 15px;
     }
+}
+
+
+
+/* ================================
+   DROPDOWN BUTTON
+================================ */
+
+.dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-btn {
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 6px;
+  background: #1f4e78;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  transition: all 0.2s ease;
+}
+
+.dropdown-btn:hover {
+  background: #163a5c;
+}
+
+.dropdown-arrow {
+  font-size: 11px;
+  margin-left: 3px;
+  transition: transform 0.2s ease;
+}
+
+/* Khi dropdown mở */
+.dropdown-btn.active .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+
+/* ================================
+   DROPDOWN MENU
+================================ */
+
+.dropdown-menu {
+  display: none;
+
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+
+  min-width: 190px;
+
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
+
+  padding: 6px;
+
+  z-index: 9999;
+}
+
+/* Khi mở */
+.dropdown-menu.show {
+  display: block;
+}
+
+
+/* ================================
+   MENU ITEM
+================================ */
+
+.dropdown-menu button {
+  width: 100%;
+
+  border: none;
+  background: transparent;
+
+  padding: 10px 12px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  text-align: left;
+
+  font-size: 14px;
+  color: #333;
+
+  border-radius: 5px;
+
+  cursor: pointer;
+}
+
+.dropdown-menu button:hover {
+  background: #f2f5f8;
+}
+
+.dropdown-menu button i {
+  width: 18px;
+  text-align: center;
+  color: #1f4e78;
+}
+
+/* =========================================
+   Final Receipt Date - Sub Menu
+   ========================================= */
+
+.final-receipt-menu {
+    display: none;
+    position: absolute;
+
+    /* Mở sang bên trái */
+    top: 0;
+    right: calc(100% + 6px);
+    left: auto;
+
+    width: max-content;
+
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
+
+    padding: 6px;
+    z-index: 9999;
+
+    /* Xếp dọc */
+    flex-direction: column;
+    gap: 2px;
+}
+
+.final-receipt-menu.show {
+    display: flex;
+}
+
+.final-receipt-menu button {
+    width: 100%;
+    min-width: 100px;
+    white-space: nowrap;
+
+    border: none;
+    background: transparent;
+
+    padding: 10px 12px;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    text-align: left;
+    font-size: 14px;
+    color: #333;
+
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.final-receipt-menu button:hover {
+    background: #f2f5f8;
+}
+
+.final-receipt-menu button i {
+    width: 18px;
+    text-align: center;
+    color: #1f4e78;
+}
+
+.switch {
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.switch-track {
+    position: relative;
+    width: 42px;
+    height: 22px;
+    border-radius: 20px;
+    background: #b8bec5;
+    transition: all 0.25s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.switch-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    transition: all 0.25s ease;
+}
+
+/* ON */
+.switch.active .switch-track {
+    background: #2e7d32;
+}
+
+.switch.active .switch-thumb {
+    left: 23px;
+}
+
+.switch:hover .switch-track {
+    box-shadow:
+        0 0 0 3px rgba(31, 78, 120, 0.08),
+        inset 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+.roi-filter-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+}
+
+.roi-filter-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.roi-filter-label i {
+    color: #1f4e78;
+}
+
+
+/* ============================================================
+   FINAL TABLE FIX - Budget + Actual + Planned fixed right
+   ============================================================ */
+
+#roiTable {
+    table-layout: fixed !important;
+    width: max-content !important;
+    min-width: 1600px !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+#roiTable th,
+#roiTable td {
+    box-sizing: border-box !important;
+    border: 1px solid #d0d0d0 !important;
+    padding: 5px 12px !important;
+    vertical-align: middle !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+#roiTable .JColResizer {
+    position: absolute !important;
+    right: -5px !important;
+    top: 0 !important;
+    width: 10px !important;
+    height: 100% !important;
+    cursor: col-resize !important;
+    z-index: 10 !important;
+    background: transparent !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+#roiTable thead th:hover > .JColResizer {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* ------------------------------------------------------------
+   Fixed widths: columns 11-19
+   ------------------------------------------------------------ */
+#roiTable th:nth-child(n+11),
+#roiTable td:nth-child(n+11) {
+    width: auto !important;
+    min-width: max-content !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+}
+
+/* ------------------------------------------------------------
+   Fixed body columns
+   ------------------------------------------------------------ */
+#roiTable tbody td:nth-child(n+11) {
+    position: sticky !important;
+    background: #ffffff !important;
+    z-index: 20 !important;
+}
+
+#roiTable tbody td:nth-child(11) { right: 735px !important; z-index: 21 !important; }
+#roiTable tbody td:nth-child(12) { right: 635px !important; z-index: 22 !important; }
+#roiTable tbody td:nth-child(13) { right: 535px !important; z-index: 23 !important; } 
+#roiTable tbody td:nth-child(14) { right: 465px !important; z-index: 24 !important; }
+#roiTable tbody td:nth-child(15) { right: 390px !important; z-index: 25 !important; }
+#roiTable tbody td:nth-child(16) { right: 290px !important; z-index: 26 !important; }
+#roiTable tbody td:nth-child(17) { right: 190px !important; z-index: 27 !important; }
+#roiTable tbody td:nth-child(18) { right: 120px !important; z-index: 28 !important; }
+#roiTable tbody td:nth-child(19) { right: 0 !important; z-index: 29 !important; }
+
+#roiTable tbody tr:nth-child(even) td:nth-child(n+11) {
+    background: #fafbfc !important;
+}
+
+#roiTable tbody tr:hover td:nth-child(n+11) {
+    background: #f8f9fa !important;
+}
+
+/* Shadow at the beginning of the fixed area */
+#roiTable tbody td:nth-child(11) {
+    box-shadow: -6px 0 10px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ------------------------------------------------------------
+   Header row 1: Budget / Actual / Planned
+   IMPORTANT: row 1 has colspan/rowspan, so do NOT use
+   nth-child(11..19) on this row.
+   ------------------------------------------------------------ */
+#roiTable thead tr:first-child th.header-budget {
+    position: sticky !important;
+    right: 465px !important;
+    top: 0 !important;
+    width: 345px !important;
+    min-width: 345px !important;
+    max-width: 345px !important;
+    z-index: 120 !important;
+    background: #548235 !important;
+    background-clip: padding-box !important;
+}
+
+#roiTable thead tr:first-child th.header-actual {
+    position: sticky !important;
+    right: 120px !important;
+    top: 0 !important;
+    width: 345px !important;
+    min-width: 345px !important;
+    max-width: 345px !important;
+    z-index: 125 !important;
+    background: #FFCC33 !important;
+    background-clip: padding-box !important;
+}
+
+#roiTable thead tr:first-child th.header-red {
+    position: sticky !important;
+    right: 0 !important;
+    top: 0 !important;
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    z-index: 130 !important;
+    background: #FF0000 !important;
+    background-clip: padding-box !important;
+}
+
+/* ============================================================
+   HEADER ROW 2 - FIXED BUDGET / ACTUAL
+   ============================================================ */
+
+/*
+   Hàng Budget / Actual phía trên cao khoảng 25px.
+   Không dùng 43px vì sẽ tạo khoảng trống và làm lộ
+   các header rowspan của các cột bên trái.
+*/
+
+
+/* -----------------------------
+   BUDGET - QUANTITY
+   ----------------------------- */
+
+#roiTable thead tr:nth-child(2) th:nth-child(1) {
+    position: sticky !important;
+
+    right: 735px !important;
+    top: 25px !important;
+
+    width: 75px !important;
+    min-width: 75px !important;
+    max-width: 75px !important;
+
+    height: 42px !important;
+
+    z-index: 125 !important;
+
+    background: #e2efda !important;
+    background-clip: padding-box !important;
+}
+
+
+/* -----------------------------
+   BUDGET - AMOUNT
+   ----------------------------- */
+
+#roiTable thead tr:nth-child(2) th:nth-child(2) {
+    position: sticky !important;
+
+    right: 635px !important;
+    top: 25px !important;
+
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    height: 42px !important;
+
+    z-index: 125 !important;
+
+    background: #e2efda !important;
+    background-clip: padding-box !important;
+}
+
+
+/* -----------------------------
+   BUDGET - ANNUAL BENEFIT
+   ----------------------------- */
+
+#roiTable thead tr:nth-child(2) th:nth-child(3) {
+    position: sticky !important;
+
+    right: 535px !important;
+    top: 25px !important;
+
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    height: 42px !important;
+
+    z-index: 125 !important;
+
+    background: #e2efda !important;
+    background-clip: padding-box !important;
+}
+
+
+/* -----------------------------
+   BUDGET - ROI
+   ----------------------------- */
+
+#roiTable thead tr:nth-child(2) th:nth-child(4) {
+    position: sticky !important;
+
+    right: 465px !important;
+    top: 25px !important;
+
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+
+    height: 42px !important;
+
+    z-index: 125 !important;
+
+    background: #e2efda !important;
+    background-clip: padding-box !important;
+}
+
+
+/* ============================================================
+   ACTUAL
+   ============================================================ */
+
+
+/* -----------------------------
+   ACTUAL - QUANTITY
+   ----------------------------- */
+
+#roiTable thead tr:nth-child(2) th:nth-child(5) {
+    position: sticky !important;
+
+    right: 390px !important;
+    top: 25px !important;
+
+    width: 75px !important;
+    min-width: 75px !important;
+    max-width: 75px !important;
+
+    height: 42px !important;
+
+    z-index: 125 !important;
+
+    background: #fff5a5 !important;
+    background-clip: padding-box !important;
+}
+
+
+/* -----------------------------
+   ACTUAL - AMOUNT
+   ----------------------------- */
+
+#roiTable thead tr:nth-child(2) th:nth-child(6) {
+    position: sticky !important;
+
+    right: 290px !important;
+    top: 25px !important;
+
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    height: 42px !important;
+
+    z-index: 125 !important;
+
+    background: #fff5a5 !important;
+    background-clip: padding-box !important;
+}
+
+
+/* -----------------------------
+   ACTUAL - ANNUAL BENEFIT
+   ----------------------------- */
+
+#roiTable thead tr:nth-child(2) th:nth-child(7) {
+    position: sticky !important;
+
+    right: 190px !important;
+    top: 25px !important;
+
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    height: 42px !important;
+
+    z-index: 125 !important;
+
+    background: #fff5a5 !important;
+    background-clip: padding-box !important;
+}
+
+
+/* -----------------------------
+   ACTUAL - ROI
+   ----------------------------- */
+
+#roiTable thead tr:nth-child(2) th:nth-child(8) {
+    position: sticky !important;
+
+    right: 120px !important;
+    top: 25px !important;
+
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+
+    height: 42px !important;
+
+    z-index: 125 !important;
+
+    background: #fff5a5 !important;
+    background-clip: padding-box !important;
+}
+/* ------------------------------------------------------------
+   No resize handles on Budget / Actual / Planned
+   ------------------------------------------------------------ */
+#roiTable thead tr:first-child th.header-budget .JColResizer,
+#roiTable thead tr:first-child th.header-actual .JColResizer,
+#roiTable thead tr:first-child th.header-red .JColResizer,
+#roiTable thead tr:nth-child(2) th .JColResizer {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+}
+
+/* Only the first 10 rowspan columns may show a resize handle */
+#roiTable thead tr:first-child th[rowspan="2"]:not(.header-red) .JColResizer {
+    display: block !important;
+}
+
+#roiTable thead tr:first-child th.header-red .JColResizer {
+    display: none !important;
+}
+
+#roiTable thead tr:first-child th[rowspan="2"]:not(.header-red):hover > .JColResizer {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+#roiTable thead tr:first-child th.header-budget,
+#roiTable thead tr:first-child th.header-actual,
+#roiTable thead tr:first-child th.header-red {
+    cursor: default !important;
+}
+
+/* Header shadow */
+#roiTable thead tr:first-child th.header-budget,
+#roiTable thead tr:first-child th.header-actual,
+#roiTable thead tr:first-child th.header-red {
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Prevent the generic sticky/resize rules from changing the fixed area */
+#roiTable th:nth-child(n+11),
+#roiTable td:nth-child(n+11) {
+    resize: none !important;
+}
+
+/* ============================================================
+   FINAL - FIXED WIDTH FOR BUDGET / ACTUAL / PLANNED
+   ============================================================ */
+
+/* Tổng width:
+   Budget = 120 + 150 + 190 + 100 = 560px
+   Actual = 120 + 150 + 190 + 100 = 560px
+   Planned = 180px
+   Total fixed right area = 1300px
+*/
+
+/* ------------------------------------------------------------
+   TABLE
+   ------------------------------------------------------------ */
+
+#roiTable {
+    table-layout: fixed !important;
+    width: max-content !important;
+    min-width: 1860px !important;
+}
+
+
+/* ------------------------------------------------------------
+   BODY - BUDGET
+   ------------------------------------------------------------ */
+
+/* Budget Quantity */
+#roiTable tbody td:nth-child(11) {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    right: 1180px !important;
+}
+
+/* Budget Amount */
+#roiTable tbody td:nth-child(12) {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+    right: 1030px !important;
+}
+
+/* Budget Annual Benefit */
+#roiTable tbody td:nth-child(13) {
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+    right: 840px !important;
+}
+
+/* Budget ROI */
+#roiTable tbody td:nth-child(14) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    right: 740px !important;
+}
+
+
+/* ------------------------------------------------------------
+   BODY - ACTUAL
+   ------------------------------------------------------------ */
+
+/* Actual Quantity */
+#roiTable tbody td:nth-child(15) {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    right: 620px !important;
+}
+
+/* Actual Amount */
+#roiTable tbody td:nth-child(16) {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+    right: 470px !important;
+}
+
+/* Actual Annual Benefit */
+#roiTable tbody td:nth-child(17) {
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+    right: 280px !important;
+}
+
+/* Actual ROI */
+#roiTable tbody td:nth-child(18) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    right: 180px !important;
+}
+
+
+/* ------------------------------------------------------------
+   BODY - PLANNED RESULTS
+   ------------------------------------------------------------ */
+
+#roiTable tbody td:nth-child(19) {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    right: 0 !important;
+}
+
+
+/* ------------------------------------------------------------
+   KHÔNG CẮT DỮ LIỆU
+   ------------------------------------------------------------ */
+
+#roiTable tbody td:nth-child(n+11) {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    box-sizing: border-box !important;
+}
+
+
+/* ============================================================
+   HEADER ROW 1
+   ============================================================ */
+
+/* BUDGET */
+#roiTable thead tr:first-child th.header-budget {
+    width: 500px !important;
+    min-width: 560px !important;
+    max-width: 500px !important;
+
+    right: 740px !important;
+    position: sticky !important;
+    top: 0 !important;
+}
+
+
+/* ACTUAL */
+#roiTable thead tr:first-child th.header-actual {
+    width: 500px !important;
+    min-width: 560px !important;
+    max-width: 500px !important;
+
+    right: 180px !important;
+    position: sticky !important;
+    top: 0 !important;
+}
+
+
+/* PLANNED */
+#roiTable thead tr:first-child th.header-red {
+    width: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
+
+    right: 0 !important;
+    position: sticky !important;
+    top: 0 !important;
+}
+
+
+/* ============================================================
+   HEADER ROW 2 - BUDGET
+   ============================================================ */
+
+/* Quantity */
+#roiTable thead tr:nth-child(2) th:nth-child(1) {
+    width: 50px !important;
+    /* min-width: 120px !important;
+    max-width: 120px !important; */
+
+    right: 1180px !important;
+}
+
+/* Amount */
+#roiTable thead tr:nth-child(2) th:nth-child(2) {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+
+    right: 1030px !important;
+}
+
+/* Annual Benefit */
+#roiTable thead tr:nth-child(2) th:nth-child(3) {
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+
+    right: 840px !important;
+}
+
+/* ROI */
+#roiTable thead tr:nth-child(2) th:nth-child(4) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    right: 740px !important;
+}
+
+
+/* ============================================================
+   HEADER ROW 2 - ACTUAL
+   ============================================================ */
+
+/* Quantity */
+#roiTable thead tr:nth-child(2) th:nth-child(5) {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+
+    right: 620px !important;
+}
+
+/* Amount */
+#roiTable thead tr:nth-child(2) th:nth-child(6) {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+
+    right: 470px !important;
+}
+
+/* Annual Benefit */
+#roiTable thead tr:nth-child(2) th:nth-child(7) {
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 190px !important;
+
+    right: 280px !important;
+}
+
+/* ROI */
+#roiTable thead tr:nth-child(2) th:nth-child(8) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    right: 180px !important;
+}
+
+
+/* ============================================================
+   HEADER - KHÔNG CẮT CHỮ
+   ============================================================ */
+
+#roiTable thead th.header-budget,
+#roiTable thead th.header-actual,
+#roiTable thead th.header-red,
+#roiTable thead th.header-budget-light,
+#roiTable thead th.header-actual-light {
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+
+
+/* ============================================================
+   FINAL COMPACT FIX
+   Budget + Actual + Planned Investment Results
+   ============================================================
+
+   Widths:
+   Budget = 80 + 100 + 130 + 75 = 385px
+   Actual = 80 + 100 + 130 + 75 = 385px
+   Planned Results = 130px
+   Total right fixed area = 900px
+
+   IMPORTANT:
+   The right values below are calculated from the columns
+   immediately to the right, so the sticky columns do not overlap.
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   TABLE - keep the existing table behavior
+   ------------------------------------------------------------ */
+
+#roiTable {
+    table-layout: fixed !important;
+    width: max-content !important;
+}
+
+
+/* ------------------------------------------------------------
+   BODY - BUDGET
+   ------------------------------------------------------------ */
+
+/* Budget Quantity - 80px */
+#roiTable tbody td:nth-child(11) {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    right: 820px !important;
+}
+
+/* Budget Amount - 100px */
+#roiTable tbody td:nth-child(12) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    right: 720px !important;
+}
+
+/* Budget Annual Benefit - 130px */
+#roiTable tbody td:nth-child(13) {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+    right: 590px !important;
+}
+
+/* Budget ROI - 75px */
+#roiTable tbody td:nth-child(14) {
+    width: 75px !important;
+    min-width: 75px !important;
+    max-width: 75px !important;
+    right: 515px !important;
+}
+
+
+/* ------------------------------------------------------------
+   BODY - ACTUAL
+   ------------------------------------------------------------ */
+
+/* Actual Quantity - 80px */
+#roiTable tbody td:nth-child(15) {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+    right: 435px !important;
+}
+
+/* Actual Amount - 100px */
+#roiTable tbody td:nth-child(16) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    right: 335px !important;
+}
+
+/* Actual Annual Benefit - 130px */
+#roiTable tbody td:nth-child(17) {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+    right: 205px !important;
+}
+
+/* Actual ROI - 75px */
+#roiTable tbody td:nth-child(18) {
+    width: 75px !important;
+    min-width: 75px !important;
+    max-width: 75px !important;
+    right: 130px !important;
+}
+
+
+/* ------------------------------------------------------------
+   BODY - PLANNED INVESTMENT RESULTS
+   ------------------------------------------------------------ */
+
+#roiTable tbody td:nth-child(19) {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+    right: 0 !important;
+}
+
+
+/* ------------------------------------------------------------
+   HEADER ROW 1
+   ------------------------------------------------------------ */
+
+/* Budget group: 385px */
+#roiTable thead tr:first-child th.header-budget {
+    width: 385px !important;
+    min-width: 385px !important;
+    max-width: 385px !important;
+
+    right: 515px !important;
+    position: sticky !important;
+    top: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Actual group: 385px */
+#roiTable thead tr:first-child th.header-actual {
+    width: 385px !important;
+    min-width: 385px !important;
+    max-width: 385px !important;
+
+    right: 130px !important;
+    position: sticky !important;
+    top: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Planned Results: 130px */
+#roiTable thead tr:first-child th.header-red {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+
+    right: 0 !important;
+    position: sticky !important;
+    top: 0 !important;
+    box-sizing: border-box !important;
+}
+
+
+/* ------------------------------------------------------------
+   HEADER ROW 2 - BUDGET
+   ------------------------------------------------------------ */
+
+/* Budget Quantity - 80px */
+#roiTable thead tr:nth-child(2) th:nth-child(1) {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+
+    right: 820px !important;
+    box-sizing: border-box !important;
+}
+
+/* Budget Amount - 100px */
+#roiTable thead tr:nth-child(2) th:nth-child(2) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    right: 720px !important;
+    box-sizing: border-box !important;
+}
+
+/* Budget Annual Benefit - 130px */
+#roiTable thead tr:nth-child(2) th:nth-child(3) {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+
+    right: 590px !important;
+    box-sizing: border-box !important;
+}
+
+/* Budget ROI - 75px */
+#roiTable thead tr:nth-child(2) th:nth-child(4) {
+    width: 75px !important;
+    min-width: 75px !important;
+    max-width: 75px !important;
+
+    right: 515px !important;
+    box-sizing: border-box !important;
+}
+
+
+/* ------------------------------------------------------------
+   HEADER ROW 2 - ACTUAL
+   ------------------------------------------------------------ */
+
+/* Actual Quantity - 80px */
+#roiTable thead tr:nth-child(2) th:nth-child(5) {
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+
+    right: 435px !important;
+    box-sizing: border-box !important;
+}
+
+/* Actual Amount - 100px */
+#roiTable thead tr:nth-child(2) th:nth-child(6) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+
+    right: 335px !important;
+    box-sizing: border-box !important;
+}
+
+/* Actual Annual Benefit - 130px */
+#roiTable thead tr:nth-child(2) th:nth-child(7) {
+    width: 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+
+    right: 205px !important;
+    box-sizing: border-box !important;
+}
+
+/* Actual ROI - 75px */
+#roiTable thead tr:nth-child(2) th:nth-child(8) {
+    width: 75px !important;
+    min-width: 75px !important;
+    max-width: 75px !important;
+
+    right: 130px !important;
+    box-sizing: border-box !important;
+}
+
+
+/* ------------------------------------------------------------
+   COMPACT HEADER PADDING
+   ------------------------------------------------------------ */
+
+#roiTable thead tr:nth-child(2) th.header-budget-light,
+#roiTable thead tr:nth-child(2) th.header-actual-light {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    white-space: normal !important;
+}
+
+
+/* ------------------------------------------------------------
+   KEEP THE RED RESULT TEXT VISIBLE
+   ------------------------------------------------------------ */
+
+#roiTable thead th.header-red {
+    white-space: normal !important;
+    text-align: center !important;
+}
+
+
+/* ------------------------------------------------------------
+   NO RESIZE HANDLE FOR THE COMPACT RIGHT AREA
+   ------------------------------------------------------------ */
+
+#roiTable th:nth-child(n+11),
+#roiTable td:nth-child(n+11) {
+    resize: none !important;
 }

@@ -17,9 +17,7 @@ class Database {
 
         console.log('📝 Đang kết nối đến SQL Server...');
         console.log(`   Host: ${config.db.host}`);
-        console.log(`   Port: ${config.db.port || 1433}`);
-        console.log(`   Database: ${config.db.database}`);
-        console.log(`   User: ${config.db.user}`);
+
 
         try {
             const sqlConfig = {
@@ -45,8 +43,6 @@ class Database {
             this.pool = await sql.connect(sqlConfig);
             this.isConnected = true;
             this.connectionAttempts = 0;
-            
-            console.log('✅ Kết nối SQL Server thành công!');
             return this.pool;
             
         } catch (err) {
@@ -57,7 +53,6 @@ class Database {
             console.error('❌ Lỗi kết nối SQL Server:', err.message);
             
             if (this.connectionAttempts < this.maxRetries) {
-                console.log(`🔄 Đang thử lại lần ${this.connectionAttempts + 1}/${this.maxRetries} sau 2s...`);
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 return this.createPool();
             }
@@ -166,7 +161,7 @@ class Database {
                 await this.pool.close();
                 this.pool = null;
                 this.isConnected = false;
-                console.log('✅ Đã đóng kết nối SQL Server');
+
             }
         } catch (err) {
             console.error('❌ Error closing connection:', err.message);

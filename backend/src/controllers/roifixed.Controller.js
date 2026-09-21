@@ -10,10 +10,12 @@ class ROIController {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 50;
             const search = req.query.search || '';
+            const budgetROIFilter = req.query.budgetROIFilter === 'true';
+            const finalReceiptFilter =
+            req.query.finalReceiptFilter || '';
+
             
-            console.log(`📊 API: page=${page}, limit=${limit}, search="${search}"`);
-            
-            const result = await roiService.getROIData(page, limit, search);
+            const result = await roiService.getROIData(page, limit, search,budgetROIFilter, finalReceiptFilter);
             
             res.json(result);
         } catch (error) {
@@ -27,10 +29,7 @@ class ROIController {
     async updateBenefit(req, res, next) {
         try {
             const { planNo, planId, benefitValue } = req.body;
-            
             const result = await roiService.updateActualBenefit(planNo, planId, benefitValue);
-            
-            // Sau khi cập nhật, lấy lại dữ liệu mới
             const updatedData = await roiService.getROIData(1, 50, '');
             
             res.json({
