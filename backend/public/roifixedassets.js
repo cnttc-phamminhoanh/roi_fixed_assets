@@ -585,74 +585,77 @@ function refreshData() {
 }
 
 
-//     if (!roiData || roiData.length === 0) {
-//         showNotification( 'No data available to export!',
-//             'warning');
-//         return;
-//     }
-    
-//     const headers = ['Department', 'Asset Class', 'Asset Description', 'Purchase Reason', 
-//                     'Depreciation', 'Request Date', 'Final Receipt Date', 
-//                     'Est. Payback Time', 'Est. Payback Date',
-//                     'Budget Qty', 'Budget Amount', 'Budget Benefit', 'Budget ROI %',
-//                     'Actual Qty', 'Actual Amount', 'Actual Benefit', 'Actual ROI %',
-//                     'Planned Results'];
-    
-//     const rows = roiData.map((item) => [
-//         item.department || '',
-//         item.assetClass || '',
-//         item.assetDescription || '',
-//         item.purchaseReason || '',
-//         item.depreciation || '',
-//         formatDate(item.requestDate),
-//         formatDate(item.finalReceiptDate),
-//         item.estimatedPaybackTime || 0,
-//         formatDate(item.estimatedPaybackDate),
-//         item.budgetQuantity || 0,
-//         item.budgetAmount || 0,
-//         item.budgetBenefit || 0,
-//         item.budgetROI ? item.budgetROI.toFixed(1) : 0,
-//         item.actualQuantity || 0,
-//         item.actualAmount || 0,
-//         item.actualBenefit || 0,
-//         item.actualROI ? item.actualROI.toFixed(1) : 0,
-//         item.plannedResults || 'N/A'
-//     ]);
-    
-//     const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
-    
-//     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-//     const link = document.createElement('a');
-//     const url = URL.createObjectURL(blob);
-//     link.href = url;
-//     link.setAttribute('download', `roi_data_${new Date().toISOString().split('T')[0]}.csv`);
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-//     URL.revokeObjectURL(url);
-    
-//     showNotification( 'Data exported successfully!',
-//         'success');
-// }
+
 
 // ========================================
 // HÀM CHUẨN HÓA TIẾNG VIỆT (BỎ DẤU)
 // ========================================
-function exportData() {
-
-    // Không có dữ liệu
-    if (!roiData || roiData.length === 0) {
-        showNotification('No data available to export!', 'warning');
-        return;
-    }
-
-    // Kiểm tra thư viện Excel
-    if (typeof XLSX === 'undefined') {
-        showNotification('Excel library is not loaded!', 'error');
-        return;
-    }
-
+async function exportData() { 
+ 
+    // Kiểm tra thư viện Excel 
+    if (typeof XLSX === 'undefined') { 
+        showNotification('Excel library is not loaded!', 'error'); 
+        return; 
+    } 
+ 
     try {
+
+        // ========================================
+        // LẤY TOÀN BỘ DỮ LIỆU TỪ BACKEND
+        // ========================================
+
+        let url = '/api/roi-data/export';
+
+        const params = new URLSearchParams();
+
+        // Search hiện tại
+        if (searchKeyword) {
+            params.append('search', searchKeyword);
+        }
+
+        // Budget ROI filter hiện tại
+        if (budgetROIFilter) {
+            params.append('budgetROIFilter', 'true');
+        }
+
+        // Final Receipt filter hiện tại
+        if (finalReceiptFilter) {
+            params.append(
+                'finalReceiptFilter',
+                finalReceiptFilter
+            );
+        }
+
+        const queryString = params.toString();
+
+        if (queryString) {
+            url += `?${queryString}`;
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP error! status: ${response.status}`
+            );
+        }
+
+        const result = await response.json();
+
+        const exportRows = result?.data || [];
+
+        if (
+            !Array.isArray(exportRows) ||
+            exportRows.length === 0
+        ) {
+            showNotification(
+                'No data available to export!',
+                'warning'
+            );
+            return;
+        }
+
+   
 
         // ========================================
         // HEADER GIỐNG TRÊN WEB
@@ -712,7 +715,7 @@ function exportData() {
         // DỮ LIỆU ĐANG HIỂN THỊ TRÊN WEB
         // ========================================
 
-        roiData.forEach((item, index) => {
+        exportRows.forEach((item, index) => {
 
             const budgetROI = parseFloat(item.budgetROI) || 0;
             const actualROI = parseFloat(item.actualROI) || 0;

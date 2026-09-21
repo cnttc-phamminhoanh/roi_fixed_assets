@@ -18,13 +18,11 @@ async function startServer() {
 
         // Graceful shutdown
         process.on('SIGTERM', async () => {
-            console.log('🛑 Shutting down...');
             await database.closePool();
             server.close(() => process.exit(0));
         });
 
         process.on('SIGINT', async () => {
-            console.log('🛑 Shutting down...');
             await database.closePool();
             server.close(() => process.exit(0));
         });

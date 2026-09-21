@@ -22,7 +22,33 @@ class ROIController {
             next(error);
         }
     }
+/**
+ * Lấy toàn bộ dữ liệu ROI để export Excel
+ */
+async exportROIData(req, res, next) {
+    try {
+        const search =
+            req.query.search || '';
 
+        const budgetROIFilter =
+            req.query.budgetROIFilter === 'true';
+
+        const finalReceiptFilter =
+            req.query.finalReceiptFilter || '';
+
+        const result =
+            await roiService.getROIDataForExport(
+                search,
+                budgetROIFilter,
+                finalReceiptFilter
+            );
+
+        res.json(result);
+
+    } catch (error) {
+        next(error);
+    }
+}
     /**
      * Cập nhật Actual Benefit
      */

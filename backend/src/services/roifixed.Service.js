@@ -99,7 +99,41 @@ class ROIService {
             };
         });
     }
+/**
+ * Lấy toàn bộ dữ liệu ROI để export Excel
+ */
+async getROIDataForExport(
+    search = '',
+    budgetROIFilter = false,
+    finalReceiptFilter = ''
+) {
+    try {
+        const result = await roiRepository.getROIData(
+            1,
+            50,
+            search,
+            budgetROIFilter,
+            finalReceiptFilter,
+            true
+        );
 
+        const transformed =
+            this.transformData(result.data);
+
+        return {
+            data: transformed,
+            total: transformed.length
+        };
+
+    } catch (error) {
+        console.error(
+            '❌ Error in ROIService.getROIDataForExport:',
+            error.message
+        );
+
+        throw error;
+    }
+}
     /**
      * Cập nhật Actual Benefit
      */
