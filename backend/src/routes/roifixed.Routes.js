@@ -5,7 +5,8 @@ const roiController = require('../controllers/roifixed.Controller');
 
 // GET: Lấy dữ liệu ROI
 router.get('/roi-data', roiController.getROIData);
-
+// GET: Lấy toàn bộ dữ liệu ROI để export Excel
+router.get('/roi-data/export', roiController.exportROIData);
 // POST: Cập nhật benefit
 router.post('/update-benefit', roiController.updateBenefit);
 

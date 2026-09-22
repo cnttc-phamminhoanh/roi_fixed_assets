@@ -10,7 +10,8 @@ async getROIData(
     limit = 50,
     search = '',
     budgetROIFilter = false,
-    finalReceiptFilter = ''
+    finalReceiptFilter = '',
+    exportAll = false
 ) {
     try {
         // ========================================
@@ -36,6 +37,13 @@ async getROIData(
         limit = Math.max(parseInt(limit) || 50, 1);
 
         const offset = (page - 1) * limit;
+
+       const paginationClause = exportAll
+    ? ''
+    : `
+        OFFSET ${offset} ROWS
+        FETCH NEXT ${limit} ROWS ONLY
+    `;
 
         // ========================================
         // 3. WHERE CLAUSE
@@ -282,8 +290,7 @@ async getROIData(
 
             ORDER BY req_date DESC
 
-            OFFSET ${offset} ROWS
-            FETCH NEXT ${limit} ROWS ONLY
+          ${paginationClause}
         `;
 
 
@@ -364,13 +371,17 @@ async getROIData(
         // ========================================
         // 9. EXECUTE
         // ========================================
-        const results = await database.executeQuery(query);
+      const results = await database.executeQuery(query);
 
-        const countResult =
-            await database.executeQuery(countQuery);
+let total = results ? results.length : 0;
 
-        const total =
-            Number(countResult?.[0]?.total) || 0;
+if (!exportAll) {
+    const countResult =
+        await database.executeQuery(countQuery);
+
+    total =
+        Number(countResult?.[0]?.total) || 0;
+}
 
         // ========================================
         // 10. RETURN
