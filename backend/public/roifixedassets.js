@@ -89,7 +89,7 @@ function renderTable(data) {
     if (!data || data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="19" style="text-align:center;padding:40px;color:#999;">
+                <td colspan="20" style="text-align:center;padding:40px;color:#999;">
                     <i class="fas fa-inbox" style="font-size:48px;display:block;margin-bottom:10px;"></i>
                     No data available
                 </td>
@@ -102,6 +102,7 @@ function renderTable(data) {
     const colWidths = {
         '#': 50,
         'Department': 140,
+        'Create User': 120,
         'Asset Class': 120,
         'Asset Description': 150,
         'Purchase Reason': 140,
@@ -151,6 +152,9 @@ function renderTable(data) {
             <tr>
                 <td style="text-align:center;font-weight:600;padding:8px 12px;color:#1a3c5e;width:${colWidths['#']}px;min-width:${colWidths['#']}px;">${index + 1}</td>
                 <td style="font-weight:600;padding:8px 12px;width:${colWidths['Department']}px;min-width:${colWidths['Department']}px;">${item.department || '-'}</td>
+                  <td style="font-weight:600;padding:8px 12px;width:${colWidths['Create User']}px;min-width:${colWidths['Create User']}px;">
+            ${item.create_user || '-'}
+        </td>
                 <td style="padding:8px 12px;width:${colWidths['Asset Class']}px;min-width:${colWidths['Asset Class']}px;">${item.assetClass || '-'}</td>
                 <td style="padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:${colWidths['Asset Description']}px ;min-width:${colWidths['Asset Description']}px;"
                     title="${item.assetDescription || '-'}">${item.assetDescription || '-'}</td>
@@ -666,6 +670,7 @@ async function exportData() {
             [
                 '#',
                 'Department',
+                'Create User',
                 'Asset Class',
                 'Asset Description',
                 'Purchase Reason',
@@ -769,6 +774,8 @@ async function exportData() {
 
                 // Department
                 item.department || '-',
+                // Create User
+                item.create_user || '-',
 
                 // Asset Class
                 item.assetClass || '-',

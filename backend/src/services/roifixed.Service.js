@@ -75,6 +75,7 @@ class ROIService {
             
             return {
                 department: item.dept_name || '-',
+                create_user: item.create_user || '-',
                 assetClass: '-',
                 assetDescription: item.fa_desc || '-',
                 purchaseReason: item.pur_reason || '-',
