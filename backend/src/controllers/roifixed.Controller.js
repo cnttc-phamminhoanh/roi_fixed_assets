@@ -52,20 +52,95 @@ async exportROIData(req, res, next) {
     /**
      * Cập nhật Actual Benefit
      */
-    async updateBenefit(req, res, next) {
-        try {
-            const { planNo, planId, benefitValue } = req.body;
-            const result = await roiService.updateActualBenefit(planNo, planId, benefitValue);
-            const updatedData = await roiService.getROIData(1, 50, '');
+    // async updateBenefit(req, res, next) {
+    //     try {
+    //         const { planNo, planId, benefitValue } = req.body;
+    //         const result = await roiService.updateActualBenefit(planNo, planId, benefitValue);
+    //         const updatedData = await roiService.getROIData(1, 50, '');
             
-            res.json({
-                ...result,
-                data: updatedData
+    //         res.json({
+    //             ...result,
+    //             data: updatedData
+    //         });
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
+    async updateBenefit(req, res, next) {
+    try {
+
+        // ==============================
+        // 1. Kiểm tra login
+        // ==============================
+
+        if (!req.session.emp_no) {
+            return res.status(401).json({
+                success: false,
+                message: 'Please login first.'
             });
-        } catch (error) {
-            next(error);
         }
+
+        const empNo = req.session.emp_no;
+
+        // ==============================
+        // 2. Lấy dữ liệu update
+        // ==============================
+
+        const {
+            planNo,
+            planId,
+            benefitValue
+        } = req.body;
+
+        if (!planNo || planId === undefined || benefitValue === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required information.'
+            });
+        }
+
+        // ==============================
+        // 3. Kiểm tra người tạo đơn
+        // ==============================
+
+        const isOwner = await roiService.checkOrderOwner(
+            planNo,
+            planId,
+            empNo
+        );
+
+        if (!isOwner) {
+            return res.status(403).json({
+                success: false,
+                message: 'Bạn không phải người làm đơn.'
+            });
+        }
+
+        // ==============================
+        // 4. Cho phép update
+        // ==============================
+
+        const result = await roiService.updateActualBenefit(
+            planNo,
+            planId,
+            benefitValue
+        );
+
+        const updatedData = await roiService.getROIData(
+            1,
+            50,
+            ''
+        );
+
+        res.json({
+            ...result,
+            data: updatedData
+        });
+
+    } catch (error) {
+        next(error);
     }
+}
 
     /**
      * Health check
@@ -101,6 +176,85 @@ async exportROIData(req, res, next) {
             next(error);
         }
     }
+
+    async login(req, res, next) {
+    try {
+        const { empNo, password } = req.body;
+
+        if (!empNo || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Employee ID and password are required.'
+            });
+        }
+
+        const user = await roiService.login(empNo, password);
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Employee ID or password is incorrect.'
+            });
+        }
+
+        // Lưu Employee ID vào session
+        req.session.emp_no = user.emp_no;
+
+        return res.json({
+            success: true,
+            employee: {
+                empNo: user.emp_no
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
 }
+
+
+async me(req, res, next) {
+    try {
+        if (!req.session.emp_no) {
+            return res.json({
+                loggedIn: false
+            });
+        }
+
+        return res.json({
+            loggedIn: true,
+            employee: {
+                empNo: req.session.emp_no
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+async logout(req, res, next) {
+    try {
+        req.session.destroy((error) => {
+
+            if (error) {
+                return next(error);
+            }
+
+            res.clearCookie('connect.sid');
+
+            return res.json({
+                success: true
+            });
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+}
+
+
 
 module.exports = new ROIController();

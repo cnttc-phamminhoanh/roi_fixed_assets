@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Employee Login - Asset Management</title>
+
+  <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+  <!-- ============ BACKGROUND — SKY & SUNLIGHT ============ -->
+  <div class="bg-layer" aria-hidden="true">
+
+    <!-- bầu trời: 2 lớp chồng để transition mượt -->
+    <span class="sky sky-day"></span>
+    <span class="sky sky-rain"></span>
+
+    <!-- mặt trời / mặt trăng (clickable) -->
+    <div class="sun" id="sunToggle" role="button" tabindex="0" title="Click to make it rain">
+      <!-- MẶT TRỜI -->
+      <span class="sun-core"></span>
+      <span class="sun-halo"></span>
+      <span class="ray ray-1"></span>
+      <span class="ray ray-2"></span>
+      <span class="ray ray-3"></span>
+      <span class="ray ray-4"></span>
+      <span class="ray ray-5"></span>
+
+      <!-- MẶT TRĂNG KHUYẾT (ẩn mặc định) -->
+      <span class="moon-halo"></span>
+      <span class="moon-core"></span>
+    </div>
+
+    <!-- mây trôi -->
+    <div class="clouds">
+      <span class="cloud cloud-1"></span>
+      <span class="cloud cloud-2"></span>
+      <span class="cloud cloud-3"></span>
+      <span class="cloud cloud-4"></span>
+      <span class="cloud cloud-5"></span>
+      <span class="cloud cloud-6"></span>
+    </div>
+
+    <!-- hạt bụi nắng lấp lánh -->
+    <div class="dust">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- tia nắng chéo rọi vào khung login -->
+    <span class="sunbeam sunbeam-1"></span>
+    <span class="sunbeam sunbeam-2"></span>
+
+    <!-- mưa (JS sinh hạt) -->
+    <div class="rain" id="rain"></div>
+
+  </div>
+
+  <div class="login-page">
+
+    <div class="login-card">
+
+      <!-- Logo -->
+      <div class="login-logo">
+        <img src="../logo.png" alt="Company Logo" onerror="this.style.display='none';">
+      </div>
+
+      <!-- Title -->
+      <div class="login-header">
+        <h1>Employee Login</h1>
+        <p>Accounting System · Corporate Finance</p>
+      </div>
+
+      <!-- Form -->
+      <form id="loginForm">
+
+        <div class="form-group">
+          <label for="empNo">Employee ID</label>
+          <div class="input-wrapper">
+            <i class="input-icon">👤</i>
+            <input type="text" id="empNo" name="empNo" placeholder="Enter Employee ID" autocomplete="username" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <i class="input-icon">🔒</i>
+            <input type="password" id="password" name="password" placeholder="Enter password"
+              autocomplete="current-password" required>
+            <button type="button" id="togglePassword" class="toggle-password" aria-label="Show password">
+              👁
+            </button>
+          </div>
+        </div>
+
+        <div id="loginError" class="login-error" style="display: none;"></div>
+
+        <button type="submit" id="loginButton" class="login-button">
+          <span id="loginButtonText">Login</span>
+          <span id="loginLoading" class="login-loading" style="display: none;">Logging in...</span>
+        </button>
+
+      </form>
+
+      <button type="button" id="backButton" class="back-button">
+        ← Back to Dashboard
+      </button>
+
+      <div class="login-footer">
+        Asset Management Dashboard · Corporate Accounting
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="login.js"></script>
+
+  <!-- =============================================
+       WEATHER TOGGLE — click mặt trời để đổi thời tiết
+  ============================================== -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const sun = document.getElementById('sunToggle');
+      const rain = document.getElementById('rain');
+
+      /* ---------- Sinh hạt mưa ---------- */
+      if (rain) {
+        const DROP_COUNT = 60;
+
+        for (let i = 0; i < DROP_COUNT; i++) {
+          const drop = document.createElement('span');
+
+          drop.style.left = (Math.random() * 105 - 3) + '%';
+          drop.style.animationDuration = (0.55 + Math.random() * 0.65).toFixed(2) + 's';
+          drop.style.animationDelay = (-Math.random() * 3).toFixed(2) + 's';
+          drop.style.opacity = (0.35 + Math.random() * 0.55).toFixed(2);
+          drop.style.height = (38 + Math.random() * 42) + 'px';
+
+          rain.appendChild(drop);
+        }
+      }
+
+      /* ---------- Click mặt trời = toggle mưa ---------- */
+      function toggleWeather() {
+        document.body.classList.toggle('rainy');
+        sun.setAttribute(
+          'title',
+          document.body.classList.contains('rainy')
+            ? 'Click to bring back the sun'
+            : 'Click to make it rain'
+        );
+      }
+
+      if (sun) {
+        sun.addEventListener('click', toggleWeather);
+
+        // hỗ trợ bàn phím (Enter / Space)
+        sun.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleWeather();
+          }
+        });
+      }
+    });
+  </script>
+
+</body>
+
+</html>

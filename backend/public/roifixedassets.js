@@ -11,6 +11,8 @@ let selectedItem = null;
 let searchKeyword = '';
 let budgetROIFilter = false;
 let finalReceiptFilter = '';
+let currentEmployee = null;
+
 // ========================================
 // PAGINATION - BIẾN TOÀN CỤC
 // ========================================
@@ -32,8 +34,8 @@ async function loadData(page = 1, keyword = '') {
             url += `&budgetROIFilter=true`;
         }
         if (finalReceiptFilter) {
-    url += `&finalReceiptFilter=${finalReceiptFilter}`;
-}
+            url += `&finalReceiptFilter=${finalReceiptFilter}`;
+        }
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -46,27 +48,25 @@ async function loadData(page = 1, keyword = '') {
         }
         const data = result?.data || result || [];
         const total = result?.total || data.length || 0;
-        
+
         // ✅ Nếu data là mảng, gán vào roiData
         if (Array.isArray(data)) {
             roiData = data;
         } else {
             roiData = [];
         }
-        
+
         totalPages = Math.ceil(total / rowsPerPage);
         currentPage = page;
         searchKeyword = keyword;
-        
+
         // Chuẩn bị dữ liệu tìm kiếm
         searchableData = prepareSearchData(roiData);
-        
+
         // Render bảng
         renderTable(roiData);
         updatePaginationControls(total);
-        
-  
-        
+
     } catch (error) {
         roiData = [];
         renderTable(roiData);
@@ -76,20 +76,17 @@ async function loadData(page = 1, keyword = '') {
 // ========================================
 // HÀM HIỂN THỊ DỮ LIỆU
 // ========================================
-// ========================================
-// HÀM HIỂN THỊ DỮ LIỆU
-// ========================================
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
-    
+
     if (!tbody) {
         return;
     }
-    
+
     if (!data || data.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="19" style="text-align:center;padding:40px;color:#999;">
+                <td colspan="20" style="text-align:center;padding:40px;color:#999;">
                     <i class="fas fa-inbox" style="font-size:48px;display:block;margin-bottom:10px;"></i>
                     No data available
                 </td>
@@ -98,10 +95,11 @@ function renderTable(data) {
         return;
     }
 
-    // ✅ ĐỘ RỘNG CỘT MẶC ĐỊNH
+    // ✅ ĐỘ RỘNG CỘT MẶC ĐỊNH (đã thêm Create User)
     const colWidths = {
         '#': 50,
         'Department': 140,
+        'Create User': 120,
         'Asset Class': 120,
         'Asset Description': 150,
         'Purchase Reason': 140,
@@ -131,10 +129,10 @@ function renderTable(data) {
         let plannedResultText = '-';
         let plannedBgColor = '#f8f9fa';
         let plannedTextColor = '#6c757d';
-        
+
         const budgetROI = parseFloat(item.budgetROI) || 0;
         const actualROI = parseFloat(item.actualROI) || 0;
-        
+
         if (actualROI > 0 && budgetROI > 0) {
             if (actualROI >= budgetROI) {
                 plannedResultText = '✅ PASS';
@@ -151,6 +149,7 @@ function renderTable(data) {
             <tr>
                 <td style="text-align:center;font-weight:600;padding:8px 12px;color:#1a3c5e;width:${colWidths['#']}px;min-width:${colWidths['#']}px;">${index + 1}</td>
                 <td style="font-weight:600;padding:8px 12px;width:${colWidths['Department']}px;min-width:${colWidths['Department']}px;">${item.department || '-'}</td>
+                <td style="font-weight:600;padding:8px 12px;width:${colWidths['Create User']}px;min-width:${colWidths['Create User']}px;">${item.createUser || '-'}</td>
                 <td style="padding:8px 12px;width:${colWidths['Asset Class']}px;min-width:${colWidths['Asset Class']}px;">${item.assetClass || '-'}</td>
                 <td style="padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:${colWidths['Asset Description']}px ;min-width:${colWidths['Asset Description']}px;"
                     title="${item.assetDescription || '-'}">${item.assetDescription || '-'}</td>
@@ -179,6 +178,7 @@ function renderTable(data) {
 
     tbody.innerHTML = html;
 }
+
 // ========================================
 // PAGINATION
 // ========================================
@@ -190,19 +190,19 @@ function updatePaginationControls(total) {
     const totalRecords = total || roiData.length;
     const start = (currentPage - 1) * rowsPerPage + 1;
     const end = Math.min(currentPage * rowsPerPage, totalRecords);
-    
+
     const infoEl = document.getElementById('paginationInfo');
     if (infoEl) {
-        infoEl.textContent = totalRecords > 0 
+        infoEl.textContent = totalRecords > 0
             ? `Showing ${start}-${end} of ${totalRecords} records`
             : 'No data available';
     }
-    
+
     const prevBtn = document.getElementById('prevPage');
     const nextBtn = document.getElementById('nextPage');
     if (prevBtn) prevBtn.disabled = currentPage <= 1;
     if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-    
+
     renderPageNumbers();
 }
 
@@ -212,34 +212,34 @@ function updatePaginationControls(total) {
 function renderPageNumbers() {
     const container = document.getElementById('pageNumbers');
     if (!container) return;
-    
+
     let html = '';
     const maxVisible = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    
+
     if (endPage - startPage < maxVisible - 1) {
         startPage = Math.max(1, endPage - maxVisible + 1);
     }
-    
+
     if (startPage > 1) {
         html += `<button class="page-number-btn" onclick="goToPage(1)">1</button>`;
         if (startPage > 2) {
             html += `<span style="padding:0 4px;color:#6c757d;">...</span>`;
         }
     }
-    
+
     for (let i = startPage; i <= endPage; i++) {
         html += `<button class="page-number-btn ${i === currentPage ? 'active-page' : ''}" onclick="goToPage(${i})">${i}</button>`;
     }
-    
+
     if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
             html += `<span style="padding:0 4px;color:#6c757d;">...</span>`;
         }
         html += `<button class="page-number-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
     }
-    
+
     container.innerHTML = html;
 }
 
@@ -248,10 +248,10 @@ function renderPageNumbers() {
  */
 function goToPage(page) {
     if (page < 1 || page > totalPages || page === currentPage) return;
-    
+
     // ✅ Gọi API lấy dữ liệu trang mới
     loadData(page, searchKeyword);
-    
+
     const tableWrapper = document.querySelector('.table-wrapper');
     if (tableWrapper) tableWrapper.scrollTop = 0;
 }
@@ -291,10 +291,10 @@ function updateSummaryCards(data) {
 
     const totalPlan = data.reduce((sum, item) => sum + (item.budgetAmount || 0), 0);
     const totalActual = data.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
-    
+
     const validPlan = data.filter(item => item.budgetROI !== null && item.budgetROI !== undefined && !isNaN(item.budgetROI));
     const avgPlan = validPlan.length > 0 ? validPlan.reduce((s, i) => s + i.budgetROI, 0) / validPlan.length : 0;
-    
+
     const validActual = data.filter(item => item.actualROI !== null && item.actualROI !== undefined && !isNaN(item.actualROI));
     const avgActual = validActual.length > 0 ? validActual.reduce((s, i) => s + i.actualROI, 0) / validActual.length : 0;
 
@@ -303,6 +303,7 @@ function updateSummaryCards(data) {
     document.getElementById('avgPlanROI').textContent = avgPlan.toFixed(1) + '%';
     document.getElementById('avgActualROI').textContent = avgActual.toFixed(1) + '%';
 }
+
 // ========================================
 // HÀM TIỆN ÍCH
 // ========================================
@@ -328,16 +329,16 @@ function formatDate(dateString) {
     try {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return '';
-        
+
         const month = date.getMonth() + 1;
         const day = date.getDate();
         const year = date.getFullYear();
         const hours = date.getHours().toString().padStart(2, '0');
         const minutes = date.getMinutes().toString().padStart(2, '0');
-        
+
         return `${month}/${day}/${year} ${hours}:${minutes}`;
-    } catch (e) { 
-        return ''; 
+    } catch (e) {
+        return '';
     }
 }
 
@@ -355,17 +356,71 @@ function formatNumber(value) {
 // MODAL FUNCTIONS
 // ========================================
 function openBenefitModal(index) {
-    selectedItem = roiData[index];
-    if (!selectedItem) { 
-        showNotification('Không tìm thấy dữ liệu!', 'error');
-        return; 
+
+    // ========================================
+    // 1. CHƯA LOGIN → CHUYỂN SANG TRANG LOGIN
+    // ========================================
+    if (!currentEmployee) {
+
+        const returnUrl = '/roifixedassets.html';
+
+        window.location.href =
+            '/login/login.html?returnUrl=' +
+            encodeURIComponent(returnUrl);
+
+        return;
     }
 
-    const hasFinalReceiptDate = selectedItem.hasFinalReceiptDate || false;
-    const hasEstimatedPaybackDate = selectedItem.hasEstimatedPaybackDate || false;
-    const actualAmount = parseFloat(selectedItem.actualAmount) || 0;
-    
-    if (!hasFinalReceiptDate) {
+    // ========================================
+    // 2. LẤY DỮ LIỆU
+    // ========================================
+    const item = roiData[index];
+
+    if (!item) {
+        showNotification(
+            'Data not found!',
+            'error'
+        );
+        return;
+    }
+
+    // ========================================
+    // 3. KIỂM TRA NGƯỜI TẠO ĐƠN
+    // ========================================
+    const createUser =
+        String(item.createUser || '')
+            .trim()
+            .toUpperCase();
+
+    const currentUser =
+        String(currentEmployee || '')
+            .trim()
+            .toUpperCase();
+
+    if (!createUser || createUser !== currentUser) {
+
+        showNotification(
+            'You are not the request creator.',
+            'error'
+        );
+
+        return;
+    }
+
+    // ========================================
+    // 4. ĐƯỢC PHÉP EDIT
+    // ========================================
+    selectedItem = item;
+
+    const hasFinalReceiptDate =
+        selectedItem.hasFinalReceiptDate || false;
+
+    const hasEstimatedPaybackDate =
+        selectedItem.hasEstimatedPaybackDate || false;
+
+    const actualAmount =
+        parseFloat(selectedItem.actualAmount) || 0;
+if (!hasFinalReceiptDate) {
         showNotification(
             '⛔ Cannot enter Benefit because Final Receipt Date is not available!',
             'error'
@@ -386,21 +441,29 @@ function openBenefitModal(index) {
         );
         return;
     }
+    // ========================================
+    // HIỂN THỊ BENEFIT MODAL
+    // ========================================
+    document.getElementById('modalAssetDesc').textContent =
+        selectedItem.assetDescription || '-';
 
-    document.getElementById('modalAssetDesc').textContent = selectedItem.assetDescription || '-';
-    document.getElementById('currentBenefitValue').textContent = (selectedItem.actualBenefit || 0).toLocaleString();
-    
-    const benefitInput = document.getElementById('benefitInput');
+    document.getElementById('currentBenefitValue').textContent =
+        (selectedItem.actualBenefit || 0).toLocaleString();
+
+    const benefitInput =
+        document.getElementById('benefitInput');
+
     benefitInput.value = '';
     benefitInput.focus();
     benefitInput.select();
-    
+
     updatePreview(benefitInput.value);
-    
+
     document.getElementById('benefitModal').style.display = 'flex';
+
     document.body.style.overflow = 'hidden';
-    
-    benefitInput.oninput = function() {
+
+    benefitInput.oninput = function () {
         updatePreview(this.value);
     };
 }
@@ -418,16 +481,17 @@ function updatePreview(value) {
     const actualAmount = item.actualAmount || 0;
     const newROI = actualAmount > 0 ? (benefit / actualAmount) * 100 : 0;
 }
+
 async function saveBenefit() {
     if (!selectedItem) {
         return;
     }
-    
+
     const benefitInput = document.getElementById('benefitInput');
     const benefitValue = parseFloat(benefitInput.value);
-    
+
     if (isNaN(benefitValue) || benefitValue < 0) {
-        showNotification( 'Please enter a value greater than or equal to 0!',
+        showNotification('Please enter a value greater than or equal to 0!',
             'warning');
         benefitInput.focus();
         benefitInput.select();
@@ -440,16 +504,16 @@ async function saveBenefit() {
     const parts = strValue.split('.');
     const integerPart = parts[0] || '0';
 
-    
+
     // Kiểm tra phần nguyên (tối đa 10 chữ số)
     if (integerPart.replace('-', '').length > 10) {
-        showNotification(  '❌ You cannot enter more than 10 digits!',
+        showNotification('❌ You cannot enter more than 10 digits!',
             'warning');
         benefitInput.focus();
         benefitInput.select();
         return;
     }
-  
+
 
     const submitBtn = document.querySelector('.btn-submit-simple') || document.querySelector('.btn-submit');
     const originalText = submitBtn ? submitBtn.innerHTML : 'Submit';
@@ -464,6 +528,7 @@ async function saveBenefit() {
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify({
                 planNo: selectedItem.planNo,
                 planId: selectedItem.planId,
@@ -473,30 +538,55 @@ async function saveBenefit() {
 
         const result = await response.json();
 
-        if (response.ok && result.success) {
-            showNotification(  '✅ Benefit updated successfully!',
-                'success');
+        if (response.status === 401) {
+
+            currentEmployee = null;
+            updateEmployeeMenu();
+
+            showNotification(
+                result.message || 'Please login first.',
+                'warning'
+            );
+
             closeBenefitModal();
-            await loadData(currentPage, searchKeyword);
-        } else {
-            throw new Error(result.message || 'Cập nhật thất bại');
+            return;
         }
-    } catch (error) {
-        selectedItem.actualBenefit = benefitValue;
-        selectedItem.actualROI = selectedItem.actualAmount > 0 ? (benefitValue / selectedItem.actualAmount) * 100 : 0;
-        
-        const budgetROI = selectedItem.budgetROI || 0;
-        const actualROI = selectedItem.actualROI || 0;
-        
-        if (actualROI > 0 && budgetROI > 0) {
-            selectedItem.plannedResults = actualROI >= budgetROI ? '✅ PASS' : '❌ NOT PASS';
-        } else if (actualROI === 0 && budgetROI > 0) {
-            selectedItem.plannedResults = '-';
-        } else {
-            selectedItem.plannedResults = 'N/A';
+
+        if (response.status === 403) {
+
+            showNotification(
+                result.message || 'You are not the request creator.',
+                'error'
+            );
+
+            return;
         }
-        renderTable(roiData);
+
+        if (!response.ok || !result.success) {
+
+            throw new Error(
+                result.message || 'Update failed.'
+            );
+        }
+
+        showNotification(
+            '✅ Benefit updated successfully!',
+            'success'
+        );
+
         closeBenefitModal();
+
+        await loadData(
+            currentPage,
+            searchKeyword
+        );
+    } catch (error) {
+        console.error('Save benefit error:', error);
+
+        showNotification(
+            error.message || 'Update failed.',
+            'error'
+        );
     } finally {
         if (submitBtn) {
             submitBtn.innerHTML = originalText;
@@ -512,21 +602,21 @@ async function saveBenefit() {
 function showNotification(message, type = 'info') {
     const container = document.getElementById('notificationContainer');
     if (!container) {
-        console.warn(  '⚠️ Notification container not found');
+        console.warn('⚠️ Notification container not found');
         return;
     }
-    
-    const colors = { 
-        success: '#28a745', 
-        error: '#dc3545', 
-        warning: '#ffc107', 
-        info: '#17a2b8' 
+
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        warning: '#ffc107',
+        info: '#17a2b8'
     };
-    const icons = { 
-        success: 'fa-check-circle', 
-        error: 'fa-exclamation-circle', 
-        warning: 'fa-exclamation-triangle', 
-        info: 'fa-info-circle' 
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
     };
     const titles = {
         success: 'Success',
@@ -579,24 +669,23 @@ function toggleBudgetROI() {
 // HÀM REFRESH & EXPORT
 // ========================================
 function refreshData() {
-    showNotification(  'Refreshing data...',
+    showNotification('Refreshing data...',
         'info');
     loadData(currentPage, searchKeyword);
 }
 
 
+// ========================================
+// EXPORT EXCEL
+// ========================================
+async function exportData() {
 
-// ========================================
-// HÀM CHUẨN HÓA TIẾNG VIỆT (BỎ DẤU)
-// ========================================
-async function exportData() { 
- 
-    // Kiểm tra thư viện Excel 
-    if (typeof XLSX === 'undefined') { 
-        showNotification('Excel library is not loaded!', 'error'); 
-        return; 
-    } 
- 
+    // Kiểm tra thư viện Excel
+    if (typeof XLSX === 'undefined') {
+        showNotification('Excel library is not loaded!', 'error');
+        return;
+    }
+
     try {
 
         // ========================================
@@ -607,22 +696,16 @@ async function exportData() {
 
         const params = new URLSearchParams();
 
-        // Search hiện tại
         if (searchKeyword) {
             params.append('search', searchKeyword);
         }
 
-        // Budget ROI filter hiện tại
         if (budgetROIFilter) {
             params.append('budgetROIFilter', 'true');
         }
 
-        // Final Receipt filter hiện tại
         if (finalReceiptFilter) {
-            params.append(
-                'finalReceiptFilter',
-                finalReceiptFilter
-            );
+            params.append('finalReceiptFilter', finalReceiptFilter);
         }
 
         const queryString = params.toString();
@@ -634,78 +717,61 @@ async function exportData() {
         const response = await fetch(url);
 
         if (!response.ok) {
-            throw new Error(
-                `HTTP error! status: ${response.status}`
-            );
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
 
         const exportRows = result?.data || [];
 
-        if (
-            !Array.isArray(exportRows) ||
-            exportRows.length === 0
-        ) {
-            showNotification(
-                'No data available to export!',
-                'warning'
-            );
+        if (!Array.isArray(exportRows) || exportRows.length === 0) {
+            showNotification('No data available to export!', 'warning');
             return;
         }
 
-   
 
         // ========================================
-        // HEADER GIỐNG TRÊN WEB
+        // HEADER GIỐNG TRÊN WEB - ĐÚNG 20 CỘT
         // ========================================
 
         const excelData = [
 
-            // Header dòng 1
+            // Header dòng 1 - ĐÚNG 20 CỘT
             [
-                '#',
-                'Department',
-                'Asset Class',
-                'Asset Description',
-                'Purchase Reason',
-                'Depreciation',
-                'Request Date',
-                'Final Receipt Date',
-                'Estimated Payback Time (Y)',
-                'Estimated Payback Date',
-                'Budget',
-                '',
-                '',
-                '',
-                'Actual',
-                '',
-                '',
-                '',
-                'Planned Investment Results'
+                '#',                            // 0
+                'Department',                   // 1
+                'Create User',                  // 2  ⭐ MỚI
+                'Asset Class',                  // 3
+                'Asset Description',            // 4
+                'Purchase Reason',              // 5
+                'Depreciation',                 // 6
+                'Request Date',                 // 7
+                'Final Receipt Date',           // 8
+                'Estimated Payback Time (Y)',   // 9
+                'Estimated Payback Date',       // 10
+                'Budget',                       // 11
+                '',                             // 12
+                '',                             // 13
+                '',                             // 14
+                'Actual',                       // 15
+                '',                             // 16
+                '',                             // 17
+                '',                             // 18
+                'Planned Investment Results'    // 19
             ],
 
-            // Header dòng 2
+            // Header dòng 2 - ĐÚNG 20 CỘT (11 ô trống + 8 cột con + 1 ô trống)
             [
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                'Quantity',
-                'Amount $',
-                'Annual Total Benefit $',
-                '% ROI',
-                'Quantity',
-                'Amount $',
-                'Annual Total Benefit $',
-                '% ROI',
-                ''
+                '', '', '', '', '', '', '', '', '', '', '', // 0-10 (11 ô trống)
+                'Quantity',                 // 11 - Budget Quantity
+                'Amount $',                 // 12 - Budget Amount
+                'Annual Total Benefit $',   // 13 - Budget Benefit
+                '% ROI',                    // 14 - Budget ROI
+                'Quantity',                 // 15 - Actual Quantity
+                'Amount $',                 // 16 - Actual Amount
+                'Annual Total Benefit $',   // 17 - Actual Benefit
+                '% ROI',                    // 18 - Actual ROI
+                ''                          // 19 - Planned (rowspan)
             ]
         ];
 
@@ -719,7 +785,6 @@ async function exportData() {
             const budgetROI = parseFloat(item.budgetROI) || 0;
             const actualROI = parseFloat(item.actualROI) || 0;
 
-            // Giống logic hiển thị trên web
             const budgetROIText =
                 item.budgetROI && item.budgetROI !== 0
                     ? item.budgetROI.toFixed(1) + '%'
@@ -730,12 +795,10 @@ async function exportData() {
                     ? item.actualROI.toFixed(1) + '%'
                     : '-';
 
-
             const budgetBenefitText =
                 item.budgetBenefit && item.budgetBenefit !== 0
                     ? formatNumber(item.budgetBenefit)
                     : '-';
-
 
             const actualBenefitText =
                 item.actualBenefit !== undefined &&
@@ -743,82 +806,81 @@ async function exportData() {
                     ? formatNumber(item.actualBenefit)
                     : '$0.00';
 
-
             // PASS / NOT PASS
             let plannedResultText = '-';
 
             if (actualROI > 0 && budgetROI > 0) {
-
                 if (actualROI >= budgetROI) {
                     plannedResultText = '✅ PASS';
                 } else {
                     plannedResultText = '❌ NOT PASS';
                 }
-
             }
 
-
             // ========================================
-            // THÊM 1 DÒNG EXCEL
+            // THÊM 1 DÒNG EXCEL - ĐÚNG 20 CỘT
             // ========================================
 
             excelData.push([
 
-                // #
+                // 0 - #
                 index + 1,
 
-                // Department
+                // 1 - Department
                 item.department || '-',
 
-                // Asset Class
+                // 2 - Create User  ⭐ MỚI
+                item.createUser || '-',
+
+                // 3 - Asset Class
                 item.assetClass || '-',
 
-                // Asset Description
+                // 4 - Asset Description
                 item.assetDescription || '-',
 
-                // Purchase Reason
+                // 5 - Purchase Reason
                 item.purchaseReason || '-',
 
-                // Depreciation
+                // 6 - Depreciation
                 item.depreciation || '-',
 
-                // Request Date
+                // 7 - Request Date
                 formatDate(item.requestDate),
 
-                // Final Receipt Date
+                // 8 - Final Receipt Date
                 formatDate(item.finalReceiptDate),
 
-                // Estimated Payback Time
+                // 9 - Estimated Payback Time
                 formatPaybackTime(item.estimatedPaybackTime),
 
-                // Estimated Payback Date
+                // 10 - Estimated Payback Date
                 formatDate(item.estimatedPaybackDate),
 
-                // Budget Quantity
+                // 11 - Budget Quantity
                 item.budgetQuantity || 0,
 
-                // Budget Amount
+                // 12 - Budget Amount
                 formatNumber(item.budgetAmount),
 
-                // Budget Annual Total Benefit
+                // 13 - Budget Annual Total Benefit
                 budgetBenefitText,
 
-                // Budget ROI
+                // 14 - Budget ROI
                 budgetROIText,
 
-                // Actual Quantity
+                // 15 - Actual Quantity
                 item.actualQuantity || 0,
 
-                // Actual Amount
+                // 16 - Actual Amount
                 formatNumber(item.actualAmount),
 
-                // Actual Annual Total Benefit
+                // 17 - Actual Annual Total Benefit
                 actualBenefitText,
 
-                // Actual ROI
+                // 18 - Actual ROI
                 actualROIText,
 
-                // Planned Investment Results
+                // 19 - Planned Investment Results
                 plannedResultText
             ]);
         });
@@ -829,185 +891,105 @@ async function exportData() {
         // ========================================
 
         const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+
+
         // ========================================
-// STYLE HEADER GIỐNG GIAO DIỆN WEB
-// ========================================
+        // STYLE HEADER GIỐNG GIAO DIỆN WEB
+        // ========================================
 
-const headerDarkBlue = {
-    fill: {
-        patternType: 'solid',
-        fgColor: { rgb: '1F4E78' }
-    },
-    font: {
-        bold: true,
-        color: { rgb: 'FFFFFF' }
-    },
-    alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true
-    },
-    border: {
-        top: { style: 'thin', color: { rgb: 'FFFFFF' } },
-        bottom: { style: 'thin', color: { rgb: 'FFFFFF' } },
-        left: { style: 'thin', color: { rgb: 'FFFFFF' } },
-        right: { style: 'thin', color: { rgb: 'FFFFFF' } }
-    }
-};
+        const headerDarkBlue = {
+            fill: { patternType: 'solid', fgColor: { rgb: '1F4E78' } },
+            font: { bold: true, color: { rgb: 'FFFFFF' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+            border: {
+                top: { style: 'thin', color: { rgb: 'FFFFFF' } },
+                bottom: { style: 'thin', color: { rgb: 'FFFFFF' } },
+                left: { style: 'thin', color: { rgb: 'FFFFFF' } },
+                right: { style: 'thin', color: { rgb: 'FFFFFF' } }
+            }
+        };
 
-const headerOrange = {
-    fill: {
-        patternType: 'solid',
-        fgColor: { rgb: 'ED7D31' }
-    },
-    font: {
-        bold: true,
-        color: { rgb: 'FFFFFF' }
-    },
-    alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true
-    },
-    border: {
-        top: { style: 'thin', color: { rgb: 'FFFFFF' } },
-        bottom: { style: 'thin', color: { rgb: 'FFFFFF' } },
-        left: { style: 'thin', color: { rgb: 'FFFFFF' } },
-        right: { style: 'thin', color: { rgb: 'FFFFFF' } }
-    }
-};
+        const headerOrange = {
+            fill: { patternType: 'solid', fgColor: { rgb: 'ED7D31' } },
+            font: { bold: true, color: { rgb: 'FFFFFF' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+            border: {
+                top: { style: 'thin', color: { rgb: 'FFFFFF' } },
+                bottom: { style: 'thin', color: { rgb: 'FFFFFF' } },
+                left: { style: 'thin', color: { rgb: 'FFFFFF' } },
+                right: { style: 'thin', color: { rgb: 'FFFFFF' } }
+            }
+        };
 
-const headerBudget = {
-    fill: {
-        patternType: 'solid',
-        fgColor: { rgb: '70AD47' }
-    },
-    font: {
-        bold: true,
-        color: { rgb: 'FFFFFF' }
-    },
-    alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true
-    }
-};
+        const headerBudget = {
+            fill: { patternType: 'solid', fgColor: { rgb: '70AD47' } },
+            font: { bold: true, color: { rgb: 'FFFFFF' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+        };
 
-const headerBudgetLight = {
-    fill: {
-        patternType: 'solid',
-        fgColor: { rgb: 'C6E0B4' }
-    },
-    font: {
-        bold: true,
-        color: { rgb: '000000' }
-    },
-    alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true
-    }
-};
+        const headerBudgetLight = {
+            fill: { patternType: 'solid', fgColor: { rgb: 'C6E0B4' } },
+            font: { bold: true, color: { rgb: '000000' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+        };
 
-const headerActual = {
-    fill: {
-        patternType: 'solid',
-        fgColor: { rgb: 'FFCC33' }
-    },
-    font: {
-        bold: true,
-        color: { rgb: '000000' }
-    },
-    alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true
-    }
-};
+        const headerActual = {
+            fill: { patternType: 'solid', fgColor: { rgb: 'FFCC33' } },
+            font: { bold: true, color: { rgb: '000000' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+        };
 
-const headerActualLight = {
-    fill: {
-        patternType: 'solid',
-        fgColor: { rgb: 'FFF5A5' }
-    },
-    font: {
-        bold: true,
-        color: { rgb: '000000' }
-    },
-    alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true
-    }
-};
+        const headerActualLight = {
+            fill: { patternType: 'solid', fgColor: { rgb: 'FFF5A5' } },
+            font: { bold: true, color: { rgb: '000000' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+        };
 
-const headerRed = {
-    fill: {
-        patternType: 'solid',
-        fgColor: { rgb: 'C00000' }
-    },
-    font: {
-        bold: true,
-        color: { rgb: 'FFFFFF' }
-    },
-    alignment: {
-        horizontal: 'center',
-        vertical: 'center',
-        wrapText: true
-    }
-};
+        const headerRed = {
+            fill: { patternType: 'solid', fgColor: { rgb: 'C00000' } },
+            font: { bold: true, color: { rgb: 'FFFFFF' } },
+            alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+        };
 
-// ========================================
-// ÁP DỤNG MÀU CHO HEADER
-// ========================================
 
-// Dòng header chính
-for (let col = 0; col <= 9; col++) {
-    const cell = worksheet[
-        XLSX.utils.encode_cell({ r: 0, c: col })
-    ];
+        // ========================================
+        // ÁP DỤNG MÀU CHO HEADER
+        // ========================================
 
-    if (cell) {
-        cell.s = col === 8 || col === 9
-            ? headerOrange
-            : headerDarkBlue;
-    }
-}
+        // Dòng header chính: cột 0-10, orange cho cột 9-10
+        for (let col = 0; col <= 10; col++) {
+            const cell = worksheet[XLSX.utils.encode_cell({ r: 0, c: col })];
+            if (cell) {
+                cell.s = (col === 9 || col === 10) ? headerOrange : headerDarkBlue;
+            }
+        }
 
-// Budget
-worksheet['K1'].s = headerBudget;
-worksheet['L1'].s = headerBudget;
-worksheet['M1'].s = headerBudget;
-worksheet['N1'].s = headerBudget;
+        // Budget header: cột 11-14 (L1, M1, N1, O1)
+        worksheet['L1'].s = headerBudget;
+        worksheet['M1'].s = headerBudget;
+        worksheet['N1'].s = headerBudget;
+        worksheet['O1'].s = headerBudget;
 
-for (let col = 10; col <= 13; col++) {
-    const cell = worksheet[
-        XLSX.utils.encode_cell({ r: 1, c: col })
-    ];
+        // Budget light (dòng 2, cột 11-14)
+        for (let col = 11; col <= 14; col++) {
+            const cell = worksheet[XLSX.utils.encode_cell({ r: 1, c: col })];
+            if (cell) cell.s = headerBudgetLight;
+        }
 
-    if (cell) {
-        cell.s = headerBudgetLight;
-    }
-}
+        // Actual header: cột 15-18 (P1, Q1, R1, S1)
+        worksheet['P1'].s = headerActual;
+        worksheet['Q1'].s = headerActual;
+        worksheet['R1'].s = headerActual;
+        worksheet['S1'].s = headerActual;
 
-// Actual
-worksheet['O1'].s = headerActual;
-worksheet['P1'].s = headerActual;
-worksheet['Q1'].s = headerActual;
-worksheet['R1'].s = headerActual;
+        // Actual light (dòng 2, cột 15-18)
+        for (let col = 15; col <= 18; col++) {
+            const cell = worksheet[XLSX.utils.encode_cell({ r: 1, c: col })];
+            if (cell) cell.s = headerActualLight;
+        }
 
-for (let col = 14; col <= 17; col++) {
-    const cell = worksheet[
-        XLSX.utils.encode_cell({ r: 1, c: col })
-    ];
-
-    if (cell) {
-        cell.s = headerActualLight;
-    }
-}
-
-// Planned Investment Results
-worksheet['S1'].s = headerRed;
+        // Planned header (cột 19): T1
+        worksheet['T1'].s = headerRed;
 
 
         // ========================================
@@ -1015,75 +997,51 @@ worksheet['S1'].s = headerRed;
         // ========================================
 
         worksheet['!merges'] = [
-
-            // # 
-            { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
-
-            // Department
-            { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },
-
-            // Asset Class
-            { s: { r: 0, c: 2 }, e: { r: 1, c: 2 } },
-
-            // Asset Description
-            { s: { r: 0, c: 3 }, e: { r: 1, c: 3 } },
-
-            // Purchase Reason
-            { s: { r: 0, c: 4 }, e: { r: 1, c: 4 } },
-
-            // Depreciation
-            { s: { r: 0, c: 5 }, e: { r: 1, c: 5 } },
-
-            // Request Date
-            { s: { r: 0, c: 6 }, e: { r: 1, c: 6 } },
-
-            // Final Receipt Date
-            { s: { r: 0, c: 7 }, e: { r: 1, c: 7 } },
-
-            // Estimated Payback Time
-            { s: { r: 0, c: 8 }, e: { r: 1, c: 8 } },
-
-            // Estimated Payback Date
-            { s: { r: 0, c: 9 }, e: { r: 1, c: 9 } },
-
-            // Budget
-            { s: { r: 0, c: 10 }, e: { r: 0, c: 13 } },
-
-            // Actual
-            { s: { r: 0, c: 14 }, e: { r: 0, c: 17 } },
-
-            // Planned Investment Results
-            { s: { r: 0, c: 18 }, e: { r: 1, c: 18 } }
+            { s: { r: 0, c: 0 },  e: { r: 1, c: 0 } },   // # 
+            { s: { r: 0, c: 1 },  e: { r: 1, c: 1 } },   // Department
+            { s: { r: 0, c: 2 },  e: { r: 1, c: 2 } },   // Create User  ⭐ MỚI
+            { s: { r: 0, c: 3 },  e: { r: 1, c: 3 } },   // Asset Class
+            { s: { r: 0, c: 4 },  e: { r: 1, c: 4 } },   // Asset Description
+            { s: { r: 0, c: 5 },  e: { r: 1, c: 5 } },   // Purchase Reason
+            { s: { r: 0, c: 6 },  e: { r: 1, c: 6 } },   // Depreciation
+            { s: { r: 0, c: 7 },  e: { r: 1, c: 7 } },   // Request Date
+            { s: { r: 0, c: 8 },  e: { r: 1, c: 8 } },   // Final Receipt Date
+            { s: { r: 0, c: 9 },  e: { r: 1, c: 9 } },   // Estimated Payback Time
+            { s: { r: 0, c: 10 }, e: { r: 1, c: 10 } },  // Estimated Payback Date
+            { s: { r: 0, c: 11 }, e: { r: 0, c: 14 } },  // Budget (4 cột)
+            { s: { r: 0, c: 15 }, e: { r: 0, c: 18 } },  // Actual (4 cột)
+            { s: { r: 0, c: 19 }, e: { r: 1, c: 19 } }   // Planned Investment Results
         ];
 
 
         // ========================================
-        // ĐỘ RỘNG CỘT
+        // ĐỘ RỘNG CỘT - ĐÚNG 20 CỘT
         // ========================================
 
         worksheet['!cols'] = [
-            { wch: 6 },   // #
-            { wch: 18 },  // Department
-            { wch: 18 },  // Asset Class
-            { wch: 35 },  // Asset Description
-            { wch: 28 },  // Purchase Reason
-            { wch: 16 },  // Depreciation
-            { wch: 22 },  // Request Date
-            { wch: 22 },  // Final Receipt Date
-            { wch: 28 },  // Estimated Payback Time
-            { wch: 24 },  // Estimated Payback Date
+            { wch: 6 },   // 0  - #
+            { wch: 18 },  // 1  - Department
+            { wch: 15 },  // 2  - Create User  ⭐ MỚI
+            { wch: 18 },  // 3  - Asset Class
+            { wch: 35 },  // 4  - Asset Description
+            { wch: 28 },  // 5  - Purchase Reason
+            { wch: 16 },  // 6  - Depreciation
+            { wch: 22 },  // 7  - Request Date
+            { wch: 22 },  // 8  - Final Receipt Date
+            { wch: 28 },  // 9  - Estimated Payback Time
+            { wch: 24 },  // 10 - Estimated Payback Date
 
-            { wch: 14 },  // Budget Quantity
-            { wch: 18 },  // Budget Amount
-            { wch: 25 },  // Budget Benefit
-            { wch: 14 },  // Budget ROI
+            { wch: 14 },  // 11 - Budget Quantity
+            { wch: 18 },  // 12 - Budget Amount
+            { wch: 25 },  // 13 - Budget Benefit
+            { wch: 14 },  // 14 - Budget ROI
 
-            { wch: 14 },  // Actual Quantity
-            { wch: 18 },  // Actual Amount
-            { wch: 25 },  // Actual Benefit
-            { wch: 14 },  // Actual ROI
+            { wch: 14 },  // 15 - Actual Quantity
+            { wch: 18 },  // 16 - Actual Amount
+            { wch: 25 },  // 17 - Actual Benefit
+            { wch: 14 },  // 18 - Actual ROI
 
-            { wch: 28 }   // Planned Results
+            { wch: 28 }   // 19 - Planned Results
         ];
 
 
@@ -1104,9 +1062,7 @@ worksheet['S1'].s = headerRed;
         // TÊN FILE
         // ========================================
 
-        const today = new Date()
-            .toISOString()
-            .split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
 
         const fileName = `roi_data_${today}.xlsx`;
 
@@ -1115,14 +1071,12 @@ worksheet['S1'].s = headerRed;
         // DOWNLOAD EXCEL
         // ========================================
 
-        XLSX.writeFile(workbook, fileName,{cellStyles: true});
-
+        XLSX.writeFile(workbook, fileName, { cellStyles: true });
 
         showNotification(
             'Excel file exported successfully!',
             'success'
         );
-
 
     } catch (error) {
 
@@ -1135,9 +1089,12 @@ worksheet['S1'].s = headerRed;
     }
 }
 
+// ========================================
+// HÀM CHUẨN HÓA TIẾNG VIỆT (BỎ DẤU)
+// ========================================
 function removeVietnameseTones(str) {
     if (!str) return '';
-    
+
     const accents = [
         /[àáạảãâầấậẩẫăằắặẳẵ]/g, /[èéẹẻẽêềếệểễ]/g,
         /[ìíịỉĩ]/g, /[òóọỏõôồốộổỗơờớợởỡ]/g,
@@ -1148,17 +1105,17 @@ function removeVietnameseTones(str) {
         /[ÙÚỤỦŨƯỪỨỰỬỮ]/g, /[ỲÝỴỶỸ]/g,
         /[Đ]/g
     ];
-    
+
     const replacements = [
         'a', 'e', 'i', 'o', 'u', 'y', 'd',
         'A', 'E', 'I', 'O', 'U', 'Y', 'D'
     ];
-    
+
     let result = str;
     accents.forEach((pattern, index) => {
         result = result.replace(pattern, replacements[index]);
     });
-    
+
     return result;
 }
 
@@ -1170,7 +1127,7 @@ let searchableData = [];
 
 function prepareSearchData(data) {
     if (!data || data.length === 0) return [];
-    
+
     return data.map(item => ({
         ...item,
         _searchText: removeVietnameseTones((item.assetDescription || '').toLowerCase())
@@ -1184,17 +1141,17 @@ function searchTable() {
     const input = document.getElementById('searchInput');
     const filter = input.value.trim();
     const clearBtn = document.getElementById('searchClear');
-    
+
     if (filter.length > 0) {
         clearBtn.classList.add('show');
     } else {
         clearBtn.classList.remove('show');
     }
-    
+
     // ✅ Lưu từ khóa search và gọi API
     searchKeyword = filter;
     currentPage = 1;
-    
+
     // ✅ Gọi API với từ khóa tìm kiếm
     loadData(1, searchKeyword);
 }
@@ -1207,10 +1164,10 @@ function clearSearch() {
     if (input) input.value = '';
     const clearBtn = document.getElementById('searchClear');
     if (clearBtn) clearBtn.classList.remove('show');
-    
+
     searchKeyword = '';
     currentPage = 1;
-    
+
     // ✅ Gọi API lấy toàn bộ dữ liệu
     loadData(1, '');
 }
@@ -1222,27 +1179,27 @@ function initColumnResize() {
     if (typeof $ === 'undefined') {
         return;
     }
-    
+
     if (!$.fn.colResizable) {
         return;
     }
-    
+
     const table = document.getElementById('roiTable');
     if (!table) {
         return;
     }
-    
+
     const tbody = document.getElementById('tableBody');
     if (!tbody || tbody.children.length === 0) {
         setTimeout(initColumnResize, 500);
         return;
     }
-    
+
     try {
         try {
             $(table).colResizable({ disable: true });
         } catch (e) {}
-        
+
         $(table).colResizable({
             liveDrag: false,
             resizeMode: 'flex',
@@ -1254,16 +1211,16 @@ function initColumnResize() {
             draggingClass: 'resizing-active',
             onResize: function() {}
         });
-        
+
     } catch (error) {}
 }
 
 function resetColumnWidths() {
     const table = document.getElementById('roiTable');
     if (!table) return;
-    
-    const defaultWidths = [50, 130, 120, 200, 150, 120, 120, 130, 160, 150, 80, 120, 150, 80, 80, 120, 150, 80, 130];
-    
+
+    const defaultWidths = [50, 130, 120, 120, 200, 150, 120, 120, 130, 160, 150, 80, 120, 150, 80, 80, 120, 150, 80, 130];
+
     const headers = table.querySelectorAll('thead th');
     headers.forEach((th, index) => {
         const width = defaultWidths[index] || 120;
@@ -1271,7 +1228,7 @@ function resetColumnWidths() {
         th.style.minWidth = width + 'px';
         th.style.maxWidth = width + 'px';
     });
-    
+
     const rows = table.querySelectorAll('tbody tr');
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
@@ -1282,22 +1239,27 @@ function resetColumnWidths() {
             cell.style.maxWidth = width + 'px';
         });
     });
-    
+
     if (typeof $ !== 'undefined' && $.fn.colResizable) {
         $(table).colResizable('destroy');
         setTimeout(() => initColumnResize(), 200);
     }
-    
-    showNotification(   'Column widths have been reset!',
+
+    showNotification('Column widths have been reset!',
         'success');
 }
 
 // ========================================
 // KHỞI TẠO TRANG
 // ========================================
-document.addEventListener('DOMContentLoaded', function() {
-    // ✅ Tải dữ liệu trang đầu tiên
-    loadData(1, '');
+document.addEventListener('DOMContentLoaded', async function() {
+
+    // Kiểm tra session đăng nhập
+    await checkLoginStatus();
+
+    // Tải dữ liệu trang đầu tiên
+    await loadData(1, '');
+
     setTimeout(function() {
         initColumnResize();
     }, 1000);
@@ -1320,7 +1282,7 @@ document.addEventListener('keydown', function(event) {
 
 (function() {
     if (typeof $ !== 'undefined' && !$.fn.colResizable) {
-        
+
         $.fn.colResizable = function(options) {
             const defaults = {
                 liveDrag: true,
@@ -1329,9 +1291,9 @@ document.addEventListener('keydown', function(event) {
                 maxWidth: 500,
                 disabledColumns: []
             };
-            
+
             const settings = $.extend({}, defaults, options);
-            
+
             return this.each(function() {
                 const table = $(this);
                 const headers = table.find('thead th');
@@ -1347,7 +1309,7 @@ document.addEventListener('keydown', function(event) {
                     }
                     const th = $(this);
                     th.css('position', 'relative');
-                    
+
                     const handle = $('<div class="JColResizer"></div>');
                     handle.css({
                         position: 'absolute',
@@ -1359,7 +1321,7 @@ document.addEventListener('keydown', function(event) {
                         zIndex: '10'
                     });
                     th.append(handle);
-                    
+
                     handle.on('mousedown', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1373,7 +1335,7 @@ document.addEventListener('keydown', function(event) {
                         handle.addClass('active');
                     });
                 });
-                
+
                 $(document).on('mousemove', function(e) {
                     if (!dragging || !currentCol) return;
                     const diff = e.clientX - startX;
@@ -1390,7 +1352,7 @@ document.addEventListener('keydown', function(event) {
                         }
                     });
                 });
-                
+
                 $(document).on('mouseup', function() {
                     if (dragging) {
                         dragging = false;
@@ -1415,8 +1377,6 @@ function handleSearchKeyPress(event) {
         searchTable();
     }
 }
-
-
 
 
 // ================================
@@ -1493,3 +1453,129 @@ function filterFinalReceipt(type) {
 
     loadData(1, searchKeyword);
 }
+
+function updateEmployeeMenu() {
+
+    const employeeElement =
+        document.getElementById('currentEmployee');
+
+    const loginButton =
+        document.getElementById('loginMenuBtn');
+
+    const logoutButton =
+        document.getElementById('logoutMenuBtn');
+
+    if (!employeeElement) {
+        return;
+    }
+
+    // ========================================
+    // ĐÃ LOGIN
+    // ========================================
+    if (currentEmployee) {
+
+        employeeElement.textContent =
+            currentEmployee;
+
+        if (loginButton) {
+            loginButton.style.display = 'none';
+        }
+
+        if (logoutButton) {
+            logoutButton.style.display = 'flex';
+        }
+
+    }
+
+    // ========================================
+    // CHƯA LOGIN
+    // ========================================
+    else {
+
+        employeeElement.textContent =
+            'Not logged in';
+
+        if (loginButton) {
+            loginButton.style.display = 'flex';
+        }
+
+        if (logoutButton) {
+            logoutButton.style.display = 'none';
+        }
+    }
+}
+
+async function checkLoginStatus() {
+
+    try {
+
+        const response = await fetch('/api/me', {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (result.loggedIn) {
+
+            currentEmployee =
+                result.employee.empNo;
+
+        } else {
+
+            currentEmployee = null;
+        }
+
+        updateEmployeeMenu();
+
+    } catch (error) {
+
+        console.error(
+            'checkLoginStatus error:',
+            error
+        );
+
+        currentEmployee = null;
+
+        updateEmployeeMenu();
+    }
+}
+
+
+
+
+async function logout() {
+    try {
+        const response = await fetch('/api/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.message || 'Logout failed.'
+            );
+        }
+
+        currentEmployee = null;
+        pendingBenefitIndex = null;
+
+        updateEmployeeMenu();
+
+        showNotification(
+            'Logout successful.',
+            'success'
+        );
+
+    } catch (error) {
+        console.error('Logout error:', error);
+
+        showNotification(
+            error.message || 'Logout failed.',
+            'error'
+        );
+    }
+}
+

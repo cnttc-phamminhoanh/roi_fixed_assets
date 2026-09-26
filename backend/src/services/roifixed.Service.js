@@ -75,6 +75,7 @@ class ROIService {
             
             return {
                 department: item.dept_name || '-',
+                createUser: item.create_user || '-',
                 assetClass: '-',
                 assetDescription: item.fa_desc || '-',
                 purchaseReason: item.pur_reason || '-',
@@ -247,6 +248,42 @@ async getROIDataForExport(
             };
         }
     }
+    async login(empNo, password) {
+    if (!empNo || !password) {
+        return null;
+    }
+
+    const user = await roiRepository.getUserByEmpNo(empNo);
+
+    if (!user) {
+        return null;
+    }
+
+    if (!user.is_active) {
+        return null;
+    }
+
+    // Hiện tại password đang lưu plain text
+    if (user.password_hash  !== password) {
+        return null;
+    }
+
+    return {
+        emp_no: user.emp_no
+    };
+}
+async checkOrderOwner(planNo, planId, empNo) {
+
+    if (!planNo || planId === undefined || !empNo) {
+        return false;
+    }
+
+    return await roiRepository.checkOrderOwner(
+        planNo,
+        planId,
+        empNo
+    );
+}
 }
 
 module.exports = new ROIService();
