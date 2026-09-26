@@ -4,35 +4,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>ROI Dashboard - Asset Management</title>
+
   <link rel="stylesheet" href="roifixedassets.css">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-
 </head>
 
 <body>
+
+  <!-- =========================================================
+       DASHBOARD HEADER
+  ========================================================== -->
+
   <div class="container">
+
     <header class="dashboard-header">
+
       <div class="header-content">
+
+        <!-- =========================
+             LEFT HEADER
+        ========================== -->
+
         <div class="header-left">
+
           <img src="../logo.png" alt="Logo" class="header-logo" />
+
           <h1>Asset Management Dashboard</h1>
 
         </div>
-        <!-- 👉 Thêm div header-right để chứa search -->
+
+
+        <!-- =========================
+             RIGHT HEADER
+        ========================== -->
+
         <div class="header-right">
+
+          <!-- =========================
+               SEARCH
+          ========================== -->
 
           <div class="search-wrapper">
 
             <input type="text" id="searchInput" class="search-input" placeholder="Search by Asset Description"
               onkeypress="handleSearchKeyPress(event)" />
-            <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none;">
+
+            <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none;"
+              title="Clear search">
               <i class="fas fa-times"></i>
             </button>
-            <!-- ✅ THÊM NÚT SEARCH -->
+
             <button class="search-btn" onclick="searchTable()" title="Search">
               <i class="fas fa-search"></i>
             </button>
@@ -40,209 +67,640 @@
           </div>
 
 
+          <!-- =========================
+               MENU DROPDOWN
+          ========================== -->
 
           <div class="dropdown-wrapper">
 
             <button class="dropdown-btn" id="dropdownBtn" onclick="toggleDropdown()">
+
               <i class="fas fa-bars"></i>
+
               Menu
+
               <i class="fas fa-chevron-down dropdown-arrow"></i>
+
             </button>
 
+
+            <!-- =========================
+                 DROPDOWN MENU
+            ========================== -->
+
             <div class="dropdown-menu" id="dropdownMenu">
+
+              <!-- =========================
+                   CURRENT EMPLOYEE
+              ========================== -->
+
+              <div class="employee-menu-info">
+
+                <div class="employee-menu-title">
+
+                  <i class="fas fa-user"></i>
+
+                  Employee
+
+                </div>
+
+                <div id="currentEmployee" class="employee-menu-value">
+                  Not logged in
+                </div>
+
+              </div>
+
+
+              <div class="dropdown-divider"></div>
+
+
+              <!-- =========================
+                   EXPORT EXCEL
+              ========================== -->
+
               <button onclick="exportData()">
+
                 <i class="fas fa-file-excel"></i>
+
                 Export Excel
+
               </button>
+
+
+              <!-- =========================
+                   ROI FILTER
+              ========================== -->
+
               <div class="roi-filter-group">
 
                 <span class="roi-filter-label">
+
                   <i class="fas fa-filter"></i>
+
                   ROI (Budget)
+
                 </span>
+
 
                 <button type="button" id="budgetRoiToggle" class="switch" onclick="toggleBudgetROI()"
                   aria-label="Toggle Budget ROI filter">
+
                   <span class="switch-track">
+
                     <span class="switch-thumb"></span>
+
                   </span>
+
                 </button>
 
               </div>
 
-              <div class="dropdown-wrapper">
-                <button class="dropdown-btn" onclick="toggleFinalReceiptMenu(event)">
-                  <i class="fas fa-calendar-check"></i>
-                  Final Receipt Date
-                </button>
 
-                <div id="finalReceiptMenu" class="final-receipt-menu">
-                  <button type="button" onclick="filterFinalReceipt('not-null')">
-                    <i class="fas fa-check-circle"></i>
-                    Received
-                  </button>
+              <div class="dropdown-divider"></div>
 
-                  <button type="button" onclick="filterFinalReceipt('null')">
-                    <i class="fas fa-times-circle"></i>
-                    Not Received
-                  </button>
-                </div>
-              </div>
+
+              <!-- =========================
+                   LOGIN
+              ========================== -->
+
+              <button id="loginMenuBtn" onclick="openLoginModal()">
+
+                <i class="fas fa-right-to-bracket"></i>
+
+                Login
+
+              </button>
+
+
+              <!-- =========================
+                   LOGOUT
+              ========================== -->
+
+              <button id="logoutMenuBtn" onclick="logout()" style="display: none;">
+
+                <i class="fas fa-right-from-bracket"></i>
+
+                Logout
+
+              </button>
+
             </div>
+
           </div>
 
         </div>
 
-
-
-
-
       </div>
+
+    </header>
+
   </div>
-  </header>
-  <!-- ===== MAIN TABLE ===== -->
+
+
+  <!-- =========================================================
+       MAIN TABLE
+  ========================================================== -->
+
   <div class="table-container">
+
     <div class="table-wrapper">
+
       <table id="roiTable">
+
+        <!-- =========================
+             TABLE HEADER
+        ========================== -->
+
         <thead>
+
+          <!-- HEADER ROW 1 -->
+
           <tr>
-            <!-- Header row 1 -->
-            <th rowspan="2" class="header-dark-blue" style="width: 50px; min-width: 50px;">#</th>
-            <th rowspan="2" class=" header-dark-blue">Department</th>
-            <th rowspan="2" class=" header-dark-blue">Asset Class</th>
-            <th rowspan="2" class=" header-dark-blue">Asset Description</th>
-            <th rowspan="2" class=" header-dark-blue">Purchase Reason</th>
-            <th rowspan="2" class=" header-dark-blue">Depreciation</th>
-            <th rowspan="2" class=" header-dark-blue">Request Date</th>
-            <th rowspan="2" class=" header-dark-blue">Final Receipt Date</th>
-            <th rowspan="2" class=" header-orange">Estimated Payback <br> Time (Y)</th>
-            <th rowspan="2" class=" header-orange">Estimated Payback<br> Date </th>
 
-            <!-- Plan (PUT) Header -->
-            <th colspan="4" class="header-budget">Budget</th>
+            <th rowspan="2" class="header-dark-blue" style="width: 50px; min-width: 50px;">
+              #
+            </th>
 
-            <!-- Actual Header -->
-            <th colspan="4" class="header-actual">Actual</th>
+            <th rowspan="2" class="header-dark-blue">
+              Department
+            </th>
+            <th rowspan="2" class="header-dark-blue">
+              Create User
+            </th>
+            <th rowspan="2" class="header-dark-blue">
+              Asset Class
+            </th>
 
-            <!-- Annual Totals -->
-            <th rowspan="2" class=" header-red">Planned Investment<br> Results</th>
+            <th rowspan="2" class="header-dark-blue">
+              Asset Description
+            </th>
 
-            <!-- <th rowspan="2" class="annual-total clickable-header" id="annualActualHeader">
-                                Annual Total (Actual)
-                                <i class="fas fa-edit" style="font-size: 12px;"></i>
-                            </th> -->
+            <th rowspan="2" class="header-dark-blue">
+              Purchase Reason
+            </th>
+
+            <th rowspan="2" class="header-dark-blue">
+              Depreciation
+            </th>
+
+            <th rowspan="2" class="header-dark-blue">
+              Request Date
+            </th>
+
+            <th rowspan="2" class="header-dark-blue">
+              Final Receipt Date
+            </th>
+
+            <th rowspan="2" class="header-orange">
+              Estimated Payback
+              <br>
+              Time (Y)
+            </th>
+
+            <th rowspan="2" class="header-orange">
+              Estimated Payback
+              <br>
+              Date
+            </th>
+
+
+            <!-- =========================
+                 BUDGET
+            ========================== -->
+
+            <th colspan="4" class="header-budget">
+              Budget
+            </th>
+
+
+            <!-- =========================
+                 ACTUAL
+            ========================== -->
+
+            <th colspan="4" class="header-actual">
+              Actual
+            </th>
+
+
+            <!-- =========================
+                 PLANNED RESULTS
+            ========================== -->
+
+            <th rowspan="2" class="header-red">
+              Planned Investment
+              <br>
+              Results
+            </th>
+
           </tr>
+
+
+          <!-- HEADER ROW 2 -->
+
           <tr>
-            <!-- Header row 2 - Plan -->
-            <th class="header-budget-light">Quantity</th>
-            <th class="header-budget-light">Amount $</th>
-            <th class="header-budget-light">Annual Total <br>Benefit $</th>
-            <th class="header-budget-light">% ROI</th>
 
-            <!-- Header row 2 - Actual -->
-            <th class="header-actual-light">Quantity</th>
-            <th class="header-actual-light">Amount $</th>
-            <th class="header-actual-light">Annual Total <br>Benefit $</th>
-            <th class="header-actual-light">% ROI</th>
+            <!-- Budget -->
+
+            <th class="header-budget-light">
+              Quantity
+            </th>
+
+            <th class="header-budget-light">
+              Amount $
+            </th>
+
+            <th class="header-budget-light">
+              Annual Total
+              <br>
+              Benefit $
+            </th>
+
+            <th class="header-budget-light">
+              % ROI
+            </th>
+
+
+            <!-- Actual -->
+
+            <th class="header-actual-light">
+              Quantity
+            </th>
+
+            <th class="header-actual-light">
+              Amount $
+            </th>
+
+            <th class="header-actual-light">
+              Annual Total
+              <br>
+              Benefit $
+            </th>
+
+            <th class="header-actual-light">
+              % ROI
+            </th>
+
           </tr>
+
         </thead>
+
+
+        <!-- =========================
+             TABLE BODY
+        ========================== -->
+
         <tbody id="tableBody">
-          <!-- Dữ liệu sẽ được load từ JavaScript -->
+
+          <!-- Data loaded by JavaScript -->
 
         </tbody>
+
       </table>
+
     </div>
-    <!-- ======================================== -->
-    <!-- ✅ PHÂN TRANG - ĐẶT Ở ĐÂY (SAU BẢNG)      -->
-    <!-- ======================================== -->
+
+
+    <!-- =======================================================
+         PAGINATION
+    ======================================================== -->
+
     <div class="pagination-container">
+
+      <!-- PAGINATION INFO -->
+
       <div class="pagination-info">
-        <span id="paginationInfo">Showing 1-50 of 0 records</span>
+
+        <span id="paginationInfo">
+          Showing 1-50 of 0 records
+        </span>
 
       </div>
+
+
+      <!-- PAGINATION BUTTONS -->
+
       <div class="pagination-controls">
+
         <button class="pagination-btn" id="prevPage" onclick="changePage(-1)" disabled>
-          <i class="fas fa-chevron-left"></i> Previous
+
+          <i class="fas fa-chevron-left"></i>
+
+          Previous
+
         </button>
+
+
         <span id="pageNumbers"></span>
+
+
         <button class="pagination-btn" id="nextPage" onclick="changePage(1)" disabled>
-          Next <i class="fas fa-chevron-right"></i>
+
+          Next
+
+          <i class="fas fa-chevron-right"></i>
+
         </button>
+
       </div>
+
+
+      <!-- ROWS PER PAGE -->
+
       <div class="pagination-rows">
+
         <label>
+
           Show
+
           <select id="rowsPerPage" onchange="changeRowsPerPage()">
-            <option value="50" selected>50</option>
-            <option value="100">100</option>
-            <option value="200">200</option>
-            <option value="500">500</option>
+
+            <option value="50" selected>
+              50
+            </option>
+
+            <option value="100">
+              100
+            </option>
+
+            <option value="200">
+              200
+            </option>
+
+            <option value="500">
+              500
+            </option>
+
           </select>
+
           records
+
         </label>
 
       </div>
+
     </div>
-    <!-- ======================================== -->
-    <!-- KẾT THÚC PHÂN TRANG                        -->
-    <!-- ======================================== -->
-  </div>
+
   </div>
 
-  <!-- ===== LOADING OVERLAY ===== -->
+
+  <!-- =========================================================
+       LOADING OVERLAY
+  ========================================================== -->
+
   <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+
     <div class="loader"></div>
-    <p>Loading data...</p>
+
+    <p>
+      Loading data...
+    </p>
+
   </div>
-  </div>
-  <!-- ===== MODAL POPUP ĐƠN GIẢN ===== -->
+
+
+  <!-- =========================================================
+       BENEFIT MODAL
+  ========================================================== -->
+
   <div id="benefitModal" class="modal" style="display: none;">
+
     <div class="modal-overlay">
+
       <div class="modal-box">
-        <!-- Header -->
+
+
+        <!-- =========================
+             MODAL HEADER
+        ========================== -->
+
         <div class="modal-header-simple">
+
           <h3>
+
             <i class="fas fa-edit"></i>
+
             Annual Total Benefit (Actual)
+
           </h3>
-          <span class="modal-close" onclick="closeBenefitModal()">&times;</span>
+
+
+          <span class="modal-close" onclick="closeBenefitModal()">
+            &times;
+          </span>
+
         </div>
 
-        <!-- Body -->
+
+        <!-- =========================
+             MODAL BODY
+        ========================== -->
+
         <div class="modal-body-simple">
+
           <div class="asset-info">
-            <p><strong>Asset:</strong> <span id="modalAssetDesc">N/A</span></p>
-            <p><strong>Current Value:</strong> <span id="currentBenefitValue">0</span> USD</p>
+
+            <p>
+
+              <strong>
+                Asset:
+              </strong>
+
+              <span id="modalAssetDesc">
+                N/A
+              </span>
+
+            </p>
+
+
+            <p>
+
+              <strong>
+                Current Value:
+              </strong>
+
+              <span id="currentBenefitValue">
+                0
+              </span>
+
+              USD
+
+            </p>
+
           </div>
 
-          <!-- Input -->
+
+          <!-- =========================
+               BENEFIT INPUT
+          ========================== -->
+
           <div class="input-group-simple">
-            <label>Please input VND Amount</label>
+
+            <label>
+              Please input VND Amount
+            </label>
+
             <input type="number" id="benefitInput" class="input-simple" step="0.01" min="0"
               placeholder="Enter amount..." />
+
           </div>
+
         </div>
 
-        <!-- Footer -->
+
+        <!-- =========================
+             MODAL FOOTER
+        ========================== -->
+
         <div class="modal-footer-simple">
-          <button class="btn-cancel-simple" onclick="closeBenefitModal()">Cancel</button>
-          <button class="btn-submit-simple" onclick="saveBenefit()">Submit</button>
+
+          <button class="btn-cancel-simple" onclick="closeBenefitModal()">
+            Cancel
+          </button>
+
+
+          <button class="btn-submit-simple" onclick="saveBenefit()">
+            Submit
+          </button>
+
         </div>
+
       </div>
+
     </div>
+
   </div>
-  <!-- ===== NOTIFICATION CONTAINER ===== -->
+
+
+  <!-- =========================================================
+       LOGIN MODAL
+  ========================================================== -->
+
+  <div id="loginModal" class="modal" style="display: none;">
+
+    <div class="modal-overlay">
+
+      <div class="modal-box login-modal-box">
+
+
+        <!-- =========================
+             LOGIN HEADER
+        ========================== -->
+
+        <div class="modal-header-simple">
+
+          <h3>
+
+            <i class="fas fa-user-lock"></i>
+
+            Employee Login
+
+          </h3>
+
+
+          <span class="modal-close" onclick="closeLoginModal()">
+            &times;
+          </span>
+
+        </div>
+
+
+        <!-- =========================
+             LOGIN BODY
+        ========================== -->
+
+        <div class="modal-body-simple">
+
+
+          <!-- EMPLOYEE ID -->
+
+          <div class="input-group-simple">
+
+            <label>
+              Employee ID
+            </label>
+
+            <input type="text" id="loginEmpNo" class="input-simple" placeholder="Enter Employee ID"
+              autocomplete="username" />
+
+          </div>
+
+
+          <!-- PASSWORD -->
+
+          <div class="input-group-simple">
+
+            <label>
+              Password
+            </label>
+
+            <input type="password" id="loginPassword" class="input-simple" placeholder="Enter password"
+              autocomplete="current-password" />
+
+          </div>
+
+
+          <!-- LOGIN ERROR -->
+
+          <div id="loginError" class="login-error" style="display: none;"></div>
+
+        </div>
+
+
+        <!-- =========================
+             LOGIN FOOTER
+        ========================== -->
+
+        <div class="modal-footer-simple">
+
+          <button class="btn-cancel-simple" onclick="closeLoginModal()">
+            Cancel
+          </button>
+
+
+          <button class="btn-submit-simple" onclick="login()">
+            Login
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       NOTIFICATION
+  ========================================================== -->
+
   <div id="notificationContainer"></div>
+
+
+  <!-- =========================================================
+       HELP BUTTON
+  ========================================================== -->
+
   <a href="https://acncvghg5nzx.feishu.cn/docx/ZOcadaHPzodO3zxXrsjcLAd6nBe" target="_blank" class="help-sticky-icon"
     title="Hướng dẫn sử dụng">
+
     <i class="fas fa-question-circle"></i>
+
   </a>
+
+
+  <!-- =========================================================
+       XLSX
+  ========================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
 
-  <!-- ===== JAVASCRIPT ===== -->
-  <script src="roifixedassets.js"></script>
 
+  <!-- =========================================================
+       MAIN JAVASCRIPT
+  ========================================================== -->
+
+  <script src="roifixedassets.js"></script>
 
 </body>
 
