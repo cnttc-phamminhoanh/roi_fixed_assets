@@ -1,8 +1,12 @@
 // backend/src/repositories/roifixed.Repository.js
+
 const database = require('../config/database');
 
 class ROIRepository {
 
+    // ============================================================
+    // GET ROI DATA
+    // ============================================================
     async getROIData(
         page = 1,
         limit = 50,
@@ -12,10 +16,6 @@ class ROIRepository {
         exportAll = false
     ) {
         try {
-
-            // ========================================
-            // 1. KIỂM TRA DATABASE
-            // ========================================
             if (!database.isConnected) {
                 await database.testConnection();
             }
@@ -24,37 +24,36 @@ class ROIRepository {
                 return {
                     data: [],
                     total: 0,
-                    page: page,
-                    limit: limit
+                    page,
+                    limit
                 };
             }
 
-            // ========================================
-            // 2. PAGINATION
-            // ========================================
             page = Math.max(parseInt(page) || 1, 1);
             limit = Math.max(parseInt(limit) || 50, 1);
 
             const offset = (page - 1) * limit;
 
-            const paginationClause = exportAll
-                ? ''
-                : `
-                    OFFSET ${offset} ROWS
-                    FETCH NEXT ${limit} ROWS ONLY
-                `;
+            // ========================================================
+            // WHERE
+            // ========================================================
 
-            // ========================================
-            // 3. WHERE CLAUSE
-            // Search + Budget ROI
-            // ========================================
             let whereConditions = [];
 
-            // ----------------------------------------
-            // SEARCH
-            // ----------------------------------------
-            if (search && search.trim()) {
+            // ========================================================
+            // ĐIỀU KIỆN CHÍNH:
+            // Chỉ lấy những record có sheet_sta = 1
+            // ========================================================
 
+            whereConditions.push(`
+                a1.sheet_sta = 1
+            `);
+
+            // ========================================================
+            // SEARCH
+            // ========================================================
+
+            if (search && search.trim()) {
                 const keyword = search.trim();
 
                 whereConditions.push(`
@@ -65,55 +64,58 @@ class ROIRepository {
                 `);
             }
 
-            // ----------------------------------------
-            // BUDGET ROI > 0
-            // ----------------------------------------
-            if (budgetROIFilter) {
+            // ========================================================
+            // BUDGET ROI FILTER
+            //
+            // OFF:
+            //     Chỉ lọc sheet_sta = 1
+            //
+            // ON:
+            //     sheet_sta = 1
+            //     AND def05 = 'yes'
+            //
+            // ========================================================
 
+            if (budgetROIFilter) {
                 whereConditions.push(`
-                    a.def07 IS NOT NULL
-                    AND a.def07 > 0
-                    AND a.sheet_qty IS NOT NULL
-                    AND a.sheet_pri IS NOT NULL
-                    AND (a.sheet_qty * a.sheet_pri) > 0
+                    a.def05 = 'yes'
                 `);
             }
 
-            // ========================================
-            // Ghép WHERE
-            // ========================================
-            let whereClause = '';
+            const whereClause = `
+                WHERE
+                    ${whereConditions.join('\nAND ')}
+            `;
 
-            if (whereConditions.length > 0) {
+            // ========================================================
+            // FINAL RECEIPT DATE FILTER
+            //
+            // Received:
+            //     MAX(i1.sheet_date) IS NOT NULL
+            //
+            // Not Received:
+            //     MAX(i1.sheet_date) IS NULL
+            //
+            // Không chọn:
+            //     Không lọc Receipt
+            // ========================================================
 
-                whereClause = `
-                    WHERE
-                        ${whereConditions.join('\nAND ')}
-                `;
-            }
-
-            // ========================================
-            // 4. HAVING CLAUSE
-            // Final Receipt Date
-            // ========================================
             let havingClause = '';
 
             if (finalReceiptFilter === 'not-null') {
-
                 havingClause = `
                     HAVING MAX(i1.sheet_date) IS NOT NULL
                 `;
-
             } else if (finalReceiptFilter === 'null') {
-
                 havingClause = `
                     HAVING MAX(i1.sheet_date) IS NULL
                 `;
             }
 
-            // ========================================
-            // 5. GROUP BY
-            // ========================================
+            // ========================================================
+            // GROUP BY
+            // ========================================================
+
             const groupByClause = `
                 GROUP BY
                     d.dept_name,
@@ -131,24 +133,33 @@ class ROIRepository {
                     v.cur_rate,
                     cu.cur_rate,
                     a1.sheet_date,
-                    u.cur_rate
+                    u.cur_rate,
+                    a1.sheet_sta
             `;
 
-            // ========================================
-            // 6. MAIN QUERY
-            // ========================================
+            // ========================================================
+            // PAGINATION
+            // ========================================================
+
+            const paginationClause = exportAll
+                ? ''
+                : `
+                    OFFSET ${offset} ROWS
+                    FETCH NEXT ${limit} ROWS ONLY
+                `;
+
+            // ========================================================
+            // MAIN QUERY
+            // ========================================================
+
             const query = `
                 SELECT
-
                     d.dept_name,
 
                     a1.create_user,
 
                     CONCAT(
-                        CONCAT(
-                            a.sheet_no,
-                            CONCAT('/', a.sheet_id)
-                        ),
+                        CONCAT(a.sheet_no, CONCAT('/', a.sheet_id)),
                         CONCAT(' - ', a.fa_desc)
                     ) AS fa_desc,
 
@@ -160,10 +171,24 @@ class ROIRepository {
 
                     MAX(i1.sheet_date) AS in_date,
 
+                    -- =================================================
+                    -- FINAL RECEIPT SHEET STATUS
+                    --
+                    -- Chỉ khi tất cả receipt record liên quan
+                    -- đều có sheet_sta = 1 thì mới trả về 1.
+                    --
+                    -- Có bất kỳ sheet_sta = 0
+                    -- hoặc không có receipt => trả về 0.
+                    -- =================================================
+                    CASE
+                        WHEN COUNT(i1.sheet_no) > 0
+                             AND MIN(ISNULL(i1.sheet_sta, 0)) = 1
+                        THEN 1
+                        ELSE 0
+                    END AS receiptSheetSta,
+
                     (
-                        (
-                            a.sheet_qty * a.sheet_pri
-                        )
+                        (a.sheet_qty * a.sheet_pri)
                         /
                         CASE
                             WHEN a.def07 = 0 THEN NULL
@@ -175,9 +200,7 @@ class ROIRepository {
                         DAY,
                         CAST(
                             (
-                                (
-                                    a.sheet_qty * a.sheet_pri
-                                )
+                                (a.sheet_qty * a.sheet_pri)
                                 /
                                 CASE
                                     WHEN a.def07 = 0 THEN NULL
@@ -191,12 +214,11 @@ class ROIRepository {
 
                     a.sheet_qty AS plan_qty,
 
-                    a.sheet_qty *
-                    (
-                        a.sheet_pri / cu.cur_rate
-                    ) AS plan_amt,
+                    a.sheet_qty * (a.sheet_pri / cu.cur_rate)
+                        AS plan_amt,
 
-                    a.def07 / cu.cur_rate AS plan_benifit,
+                    a.def07 / cu.cur_rate
+                        AS plan_benifit,
 
                     (
                         CASE
@@ -204,31 +226,35 @@ class ROIRepository {
                             ELSE a.def07
                         END
                         /
-                        (
-                            a.sheet_qty * a.sheet_pri
-                        )
-                    ) * 100 AS roi_plan,
+                        (a.sheet_qty * a.sheet_pri)
+                    ) * 100
+                        AS roi_plan,
 
-                    SUM(i.sheet_qty) AS in_qty,
+                    SUM(i.sheet_qty)
+                        AS in_qty,
 
                     (
                         (
-                            AVG(o.sheet_pri) * v.cur_rate
+                            (AVG(o.sheet_pri) * v.cur_rate)
+                            / u.cur_rate
                         )
-                        /
-                        u.cur_rate
-                    )
-                    *
-                    SUM(i.sheet_qty) AS act_amt,
+                        * SUM(i.sheet_qty)
+                    ) AS act_amt,
 
-                    a.def06 / cu.cur_rate AS act_benifit,
+                    a.def06 / cu.cur_rate
+                        AS act_benifit,
 
-                    -- ROI Actual lấy trực tiếp từ def08
-                    a.def08 AS roi_act,
+                    a.def08
+                        AS roi_act,
 
-                    a.sheet_no AS plan_no,
+                    a.sheet_no
+                        AS plan_no,
 
-                    a.sheet_id AS plan_id
+                    a.sheet_id
+                        AS plan_id,
+
+                    a1.sheet_sta
+                        AS sheet_sta
 
                 FROM oa_fa_pur_req2 a WITH(NOLOCK)
 
@@ -274,9 +300,9 @@ class ROIRepository {
                     ON i.pur_no = o.sheet_no
                     AND i.pur_id = o.id
 
-                INNER JOIN oa_fa_pur_in1 i1 WITH(NOLOCK)
+                LEFT JOIN oa_fa_pur_in1 i1 WITH(NOLOCK)
                     ON i.sheet_no = i1.sheet_no
-AND i1.sheet_sta = 1
+
                 ${whereClause}
 
                 ${groupByClause}
@@ -288,92 +314,79 @@ AND i1.sheet_sta = 1
                 ${paginationClause}
             `;
 
-            // ========================================
-            // 7. COUNT QUERY
-            // ========================================
+            console.log('[ROI] Executing getROIData...');
+            console.log('[ROI] Condition: a1.sheet_sta = 1');
+
+            if (budgetROIFilter) {
+                console.log(
+                    '[ROI] Budget ROI filter: a.def05 = yes'
+                );
+            }
+
+            if (finalReceiptFilter === 'not-null') {
+                console.log(
+                    '[ROI] Final Receipt filter: Received'
+                );
+            } else if (finalReceiptFilter === 'null') {
+                console.log(
+                    '[ROI] Final Receipt filter: Not Received'
+                );
+            }
+
+            // ========================================================
+            // EXECUTE MAIN QUERY
+            // ========================================================
+
+            const results = await database.executeQuery(query);
+
+            // ========================================================
+            // COUNT QUERY
+            //
+            // Count phải sử dụng cùng điều kiện:
+            // - sheet_sta = 1
+            // - search
+            // - Budget ROI
+            // - Final Receipt
+            // ========================================================
+
             const countQuery = `
                 SELECT COUNT(*) AS total
-
                 FROM (
                     SELECT
-                        d.dept_name,
                         a.sheet_no,
-                        a.sheet_id,
-                        a.fa_desc,
-                        c.base_name,
-                        a1.create_date,
-                        a.sheet_qty,
-                        a.sheet_pri,
-                        a.def07,
-                        a.def06,
-                        a.def08,
-                        a1.sheet_date
+                        a.sheet_id
 
                     FROM oa_fa_pur_req2 a WITH(NOLOCK)
 
                     INNER JOIN oa_fa_pur_req1 a1 WITH(NOLOCK)
                         ON a.sheet_no = a1.sheet_no
 
-                    LEFT JOIN bas_dept d WITH(NOLOCK)
-                        ON a1.dept_no = d.dept_no
-
-                    LEFT JOIN bas_base_code c WITH(NOLOCK)
-                        ON c.code_type = '173'
-                        AND c.base_code = a.def11
-
                     LEFT JOIN oa_fa_pur_order2 o WITH(NOLOCK)
                         ON o.plan_no = a.sheet_no
                         AND o.plan_id = a.id
-
-                    LEFT JOIN oa_fa_pur_order1 o1 WITH(NOLOCK)
-                        ON o.sheet_no = o1.sheet_no
-
-                    LEFT JOIN bas_cur_acc cu WITH(NOLOCK)
-                        ON cu.cur_code = 'USD'
-                        AND FORMAT(
-                            CAST(a1.sheet_date AS DATE),
-                            'yyyyMM'
-                        ) = cu.acc_period
-
-                    LEFT JOIN bas_cur_acc v WITH(NOLOCK)
-                        ON v.cur_code = o1.cur_no
-                        AND FORMAT(
-                            CAST(o1.sheet_date AS DATE),
-                            'yyyyMM'
-                        ) = v.acc_period
-
-                    LEFT JOIN bas_cur_acc u WITH(NOLOCK)
-                        ON u.cur_code = 'USD'
-                        AND FORMAT(
-                            CAST(o1.sheet_date AS DATE),
-                            'yyyyMM'
-                        ) = u.acc_period
 
                     LEFT JOIN oa_fa_pur_in2 i WITH(NOLOCK)
                         ON i.pur_no = o.sheet_no
                         AND i.pur_id = o.id
 
-                    INNER JOIN oa_fa_pur_in1 i1 WITH(NOLOCK)
+                    LEFT JOIN oa_fa_pur_in1 i1 WITH(NOLOCK)
                         ON i.sheet_no = i1.sheet_no
-                        AND i1.sheet_sta = 1
+
                     ${whereClause}
 
-                    ${groupByClause}
+                    GROUP BY
+                        a.sheet_no,
+                        a.sheet_id
 
                     ${havingClause}
-
                 ) AS filtered_data
             `;
 
-            // ========================================
-            // 8. EXECUTE
-            // ========================================
-            const results = await database.executeQuery(query);
-
-            let total = results ? results.length : 0;
+            let total = results
+                ? results.length
+                : 0;
 
             if (!exportAll) {
-
                 const countResult =
                     await database.executeQuery(countQuery);
 
@@ -381,54 +394,56 @@ AND i1.sheet_sta = 1
                     Number(countResult?.[0]?.total) || 0;
             }
 
-            // ========================================
-            // 9. RETURN
-            // ========================================
+            console.log(
+                `[ROI] Current page rows: ${results?.length || 0}`
+            );
+
+            console.log(
+                `[ROI] Total rows: ${total}`
+            );
+
             return {
                 data: results || [],
-                total: total,
-                page: page,
-                limit: limit
+                total,
+                page,
+                limit
             };
 
         } catch (error) {
 
             console.error(
-                '[Sticker] Error in getROIData:',
-                error.message
+                '[ROI Repository] getROIData ERROR:'
             );
+
+            console.error(error.message);
+
+            console.error(error);
 
             return {
                 data: [],
                 total: 0,
-                page: page,
-                limit: limit
+                page,
+                limit
             };
         }
     }
 
 
-    /**
-     * ================================================
-     * CẬP NHẬT ACTUAL BENEFIT + ACTUAL ROI
-     * ================================================
-     *
-     * def06 = Actual Benefit
-     * def08 = Actual ROI %
-     */
-    async updateActualBenefit(planNo, planId, benefitValue) {
-
+    // ============================================================
+    // UPDATE ACTUAL BENEFIT
+    // ============================================================
+    async updateActualBenefit(
+        planNo,
+        planId,
+        benefitValue
+    ) {
         try {
 
-            // ========================================
-            // 1. KIỂM TRA DATABASE
-            // ========================================
             if (!database.isConnected) {
                 await database.testConnection();
             }
 
             if (!database.isConnected) {
-
                 return {
                     success: true,
                     message: 'Cập nhật thành công (Demo mode)',
@@ -436,16 +451,13 @@ AND i1.sheet_sta = 1
                 };
             }
 
-            // ========================================
-            // 2. UPDATE ACTUAL BENEFIT
-            //
-            // def06 = Actual Benefit
-            // ========================================
+            // ========================================================
+            // UPDATE ACTUAL BENEFIT
+            // ========================================================
+
             const updateQuery = `
                 UPDATE oa_fa_pur_req2
-
                 SET def06 = @benefitValue
-
                 WHERE sheet_no = @planNo
                   AND sheet_id = @planId
             `;
@@ -453,23 +465,24 @@ AND i1.sheet_sta = 1
             const result = await database.executeQuery(
                 updateQuery,
                 {
-                    benefitValue: benefitValue,
-                    planNo: planNo,
-                    planId: planId
+                    benefitValue,
+                    planNo,
+                    planId
                 }
             );
 
-            // ========================================
-            // 3. LẤY SỐ DÒNG ĐÃ UPDATE
-            // ========================================
             let affectedRows = 0;
 
-            if (result && result.length !== undefined) {
-
+            if (
+                result &&
+                result.length !== undefined
+            ) {
                 affectedRows = result.length;
 
-            } else if (result && result.rowsAffected) {
-
+            } else if (
+                result &&
+                result.rowsAffected
+            ) {
                 affectedRows =
                     result.rowsAffected[0] || 0;
 
@@ -477,32 +490,16 @@ AND i1.sheet_sta = 1
                 result &&
                 result.affectedRows !== undefined
             ) {
-
                 affectedRows =
                     result.affectedRows;
             }
 
-            // ========================================
-            // 4. TÍNH ACTUAL ROI
-            //
-            // Công thức giữ nguyên theo ROI hiện tại:
-            //
-            // (
-            //     (def06 / USD rate)
-            //     /
-            //     (
-            //         (
-            //             AVG(order price) * currency rate
-            //         )
-            //         / USD rate
-            //     )
-            //     * SUM(receipt qty)
-            // )
-            // * 100
-            // ========================================
+            // ========================================================
+            // CALCULATE ACTUAL ROI
+            // ========================================================
+
             const roiQuery = `
                 SELECT
-
                     (
                         (
                             a.def06 / cu.cur_rate
@@ -511,12 +508,12 @@ AND i1.sheet_sta = 1
                         (
                             (
                                 (
-                                    AVG(o.sheet_pri) * v.cur_rate
+                                    AVG(o.sheet_pri)
+                                    * v.cur_rate
                                 )
                                 / u.cur_rate
                             )
-                            *
-                            SUM(i.sheet_qty)
+                            * SUM(i.sheet_qty)
                         )
                     ) * 100 AS roi_act
 
@@ -524,6 +521,7 @@ AND i1.sheet_sta = 1
 
                 INNER JOIN oa_fa_pur_req1 a1 WITH(NOLOCK)
                     ON a.sheet_no = a1.sheet_no
+                    AND a1.sheet_sta = 1
 
                 LEFT JOIN oa_fa_pur_order2 o WITH(NOLOCK)
                     ON o.plan_no = a.sheet_no
@@ -557,9 +555,8 @@ AND i1.sheet_sta = 1
                     ON i.pur_no = o.sheet_no
                     AND i.pur_id = o.id
 
-                WHERE
-                    a.sheet_no = @planNo
-                    AND a.sheet_id = @planId
+                WHERE a.sheet_no = @planNo
+                  AND a.sheet_id = @planId
 
                 GROUP BY
                     a.def06,
@@ -568,34 +565,24 @@ AND i1.sheet_sta = 1
                     u.cur_rate
             `;
 
-            // ========================================
-            // 5. EXECUTE ROI QUERY
-            // ========================================
-            const roiResult =
-                await database.executeQuery(
-                    roiQuery,
-                    {
-                        planNo: planNo,
-                        planId: planId
-                    }
-                );
+            const roiResult = await database.executeQuery(
+                roiQuery,
+                {
+                    planNo,
+                    planId
+                }
+            );
 
-            // ========================================
-            // 6. LẤY ROI ACTUAL
-            // ========================================
             const roiAct =
                 roiResult?.[0]?.roi_act ?? null;
 
-            // ========================================
-            // 7. LƯU ROI VÀO DEF08
-            //
-            // def08 = Actual ROI %
-            // ========================================
+            // ========================================================
+            // UPDATE ROI ACTUAL
+            // ========================================================
+
             const updateROIQuery = `
                 UPDATE oa_fa_pur_req2
-
                 SET def08 = @roiAct
-
                 WHERE sheet_no = @planNo
                   AND sheet_id = @planId
             `;
@@ -603,81 +590,120 @@ AND i1.sheet_sta = 1
             await database.executeQuery(
                 updateROIQuery,
                 {
-                    roiAct: roiAct,
-                    planNo: planNo,
-                    planId: planId
+                    roiAct,
+                    planNo,
+                    planId
                 }
             );
 
-            // ========================================
-            // 8. RETURN
-            // ========================================
             return {
                 success: true,
-                message: 'Cập nhật Actual Benefit và ROI thành công',
-                affectedRows: affectedRows,
-                roiAct: roiAct
+                message:
+                    'Cập nhật Actual Benefit và ROI thành công',
+                affectedRows,
+                roiAct
             };
 
         } catch (error) {
 
             console.error(
-                '[Sticker] Error updating actual benefit:',
+                '[ROI Repository] Error updating actual benefit:',
                 error
             );
 
             throw error;
         }
     }
-async getUserByEmpNo(empNo) {
-    try {
-        const query = `
-            SELECT
-                id,
-                emp_no,
-                password_hash,
-                is_active
-            FROM dbo.asset_man_users
-            WHERE emp_no = @empNo
-        `;
 
-        const result = await database.executeQuery(query, {
-            empNo: empNo
-        });
 
-        return result?.[0] || null;
+    // ============================================================
+    // GET USER BY EMP NO
+    // ============================================================
+    async getUserByEmpNo(empNo) {
+        try {
 
-    } catch (error) {
-        console.error('getUserByEmpNo error:', error);
-        throw error;
+            const query = `
+                SELECT
+                    id,
+                    emp_no,
+                    password_hash,
+                    is_active
+                FROM dbo.asset_man_users
+                WHERE emp_no = @empNo
+            `;
+
+            const result =
+                await database.executeQuery(
+                    query,
+                    {
+                        empNo
+                    }
+                );
+
+            return result?.[0] || null;
+
+        } catch (error) {
+
+            console.error(
+                'getUserByEmpNo error:',
+                error
+            );
+
+            throw error;
+        }
     }
-}
-async checkOrderOwner(planNo, planId, empNo) {
-    try {
-        const query = `
-            SELECT TOP 1
-                1 AS is_owner
-            FROM dbo.oa_fa_pur_req2 a
-            INNER JOIN dbo.oa_fa_pur_req1 a1
-                ON a.sheet_no = a1.sheet_no
-            WHERE a.sheet_no = @planNo
-              AND a.sheet_id = @planId
-              AND a1.create_user = @empNo
-        `;
 
-        const result = await database.executeQuery(query, {
-            planNo: planNo,
-            planId: planId,
-            empNo: empNo
-        });
 
-        return result && result.length > 0;
+    // ============================================================
+    // CHECK ORDER OWNER
+    // ============================================================
+    async checkOrderOwner(
+        planNo,
+        planId,
+        empNo
+    ) {
+        try {
 
-    } catch (error) {
-        console.error('checkOrderOwner error:', error);
-        throw error;
+            const query = `
+                SELECT TOP 1
+                    1 AS is_owner
+
+                FROM dbo.oa_fa_pur_req2 a
+
+                INNER JOIN dbo.oa_fa_pur_req1 a1
+                    ON a.sheet_no = a1.sheet_no
+                    AND a1.sheet_sta = 1
+
+                WHERE a.sheet_no = @planNo
+                  AND a.sheet_id = @planId
+                  AND a1.create_user = @empNo
+            `;
+
+            const result =
+                await database.executeQuery(
+                    query,
+                    {
+                        planNo,
+                        planId,
+                        empNo
+                    }
+                );
+
+            return (
+                result &&
+                result.length > 0
+            );
+
+        } catch (error) {
+
+            console.error(
+                'checkOrderOwner error:',
+                error
+            );
+
+            throw error;
+        }
     }
-}
 }
 
 module.exports = new ROIRepository();

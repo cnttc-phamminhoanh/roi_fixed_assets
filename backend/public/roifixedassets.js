@@ -385,7 +385,30 @@ function openBenefitModal(index) {
     }
 
     // ========================================
-    // 3. KIỂM TRA NGƯỜI TẠO ĐƠN
+    // 3. KIỂM TRA OA_FA_PUR_IN1.SHEET_STA
+    // CHỈ sheet_sta = 1 MỚI ĐƯỢC MỞ POPUP
+    // ========================================
+    const receiptSheetSta = Number(item.receiptSheetSta);
+
+    console.log('================================');
+    console.log('Plan No:', item.planNo);
+    console.log('Plan ID:', item.planId);
+    console.log('receiptSheetSta:', item.receiptSheetSta);
+    console.log('receiptSheetSta Number:', receiptSheetSta);
+    console.log('================================');
+
+    if (receiptSheetSta !== 1) {
+
+        showNotification(
+            '⛔ You have not approved Asset PO Stock-in yet.',
+            'warning'
+        );
+
+        return;
+    }
+
+    // ========================================
+    // 4. KIỂM TRA NGƯỜI TẠO ĐƠN
     // ========================================
     const createUser =
         String(item.createUser || '')
@@ -408,7 +431,7 @@ function openBenefitModal(index) {
     }
 
     // ========================================
-    // 4. ĐƯỢC PHÉP EDIT
+    // 5. ĐƯỢC PHÉP EDIT
     // ========================================
     selectedItem = item;
 
@@ -420,29 +443,51 @@ function openBenefitModal(index) {
 
     const actualAmount =
         parseFloat(selectedItem.actualAmount) || 0;
-if (!hasFinalReceiptDate) {
+
+    // ========================================
+    // 6. KIỂM TRA FINAL RECEIPT DATE
+    // ========================================
+    if (!hasFinalReceiptDate) {
+
         showNotification(
             '⛔ Cannot enter Benefit because Final Receipt Date is not available!',
             'error'
         );
+
+        selectedItem = null;
         return;
     }
-    if (!hasEstimatedPaybackDate) {
-        showNotification(
-             '⛔ Cannot enter Benefit because Estimated Payback Date is not available!',
-            'error'
-        );
-        return;
-    }
-    if (actualAmount <= 0) {
-        showNotification(
-             '⛔ Cannot enter Benefit because Actual Amount = 0. Please update the actual amount first!',
-            'error'
-        );
-        return;
-    }
+
     // ========================================
-    // HIỂN THỊ BENEFIT MODAL
+    // 7. KIỂM TRA ESTIMATED PAYBACK DATE
+    // ========================================
+    if (!hasEstimatedPaybackDate) {
+
+        showNotification(
+            '⛔ Cannot enter Benefit because Estimated Payback Date is not available!',
+            'error'
+        );
+
+        selectedItem = null;
+        return;
+    }
+
+    // ========================================
+    // 8. KIỂM TRA ACTUAL AMOUNT
+    // ========================================
+    if (actualAmount <= 0) {
+
+        showNotification(
+            '⛔ Cannot enter Benefit because Actual Amount = 0. Please update the actual amount first!',
+            'error'
+        );
+
+        selectedItem = null;
+        return;
+    }
+
+    // ========================================
+    // 9. HIỂN THỊ BENEFIT MODAL
     // ========================================
     document.getElementById('modalAssetDesc').textContent =
         selectedItem.assetDescription || '-';
@@ -454,14 +499,19 @@ if (!hasFinalReceiptDate) {
         document.getElementById('benefitInput');
 
     benefitInput.value = '';
+
     benefitInput.focus();
     benefitInput.select();
 
-    updatePreview(benefitInput.value);
+    updatePreview(
+        benefitInput.value
+    );
 
-    document.getElementById('benefitModal').style.display = 'flex';
+    document.getElementById('benefitModal').style.display =
+        'flex';
 
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow =
+        'hidden';
 
     benefitInput.oninput = function () {
         updatePreview(this.value);
