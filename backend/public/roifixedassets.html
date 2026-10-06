@@ -154,7 +154,28 @@
                 </button>
 
               </div>
+              <div class="dropdown-wrapper">
 
+                <button class="dropdown-btn" onclick="toggleFinalReceiptMenu(event)">
+                  <i class="fas fa-calendar-check"></i>
+                  Final Receipt Date
+                </button>
+
+                <div id="finalReceiptMenu" class="final-receipt-menu">
+
+                  <button type="button" onclick="filterFinalReceipt('not-null')">
+                    <i class="fas fa-check-circle"></i>
+                    Received
+                  </button>
+
+                  <button type="button" onclick="filterFinalReceipt('null')">
+                    <i class="fas fa-times-circle"></i>
+                    Not Received
+                  </button>
+
+                </div>
+
+              </div>
 
               <div class="dropdown-divider"></div>
 
@@ -163,14 +184,10 @@
                    LOGIN
               ========================== -->
 
-              <button id="loginMenuBtn" onclick="openLoginModal()">
-
+              <button id="loginMenuBtn" type="button" onclick="window.location.href='/login/login.html'">
                 <i class="fas fa-right-to-bracket"></i>
-
                 Login
-
               </button>
-
 
               <!-- =========================
                    LOGOUT

@@ -1,25 +1,52 @@
 // backend/src/services/roifixed.Service.js
+
 const roiRepository = require('../repositories/roifixed.Repository');
 
 class ROIService {
+
     /**
-     * Lấy dữ liệu ROI với phân trang và tìm kiếm
+     * ============================================================
+     * LẤY DỮ LIỆU ROI VỚI PHÂN TRANG VÀ TÌM KIẾM
+     * ============================================================
      */
-    async getROIData(page = 1, limit = 50, search = '', budgetROIFilter = false,finalReceiptFilter = '') {
+    async getROIData(
+        page = 1,
+        limit = 50,
+        search = '',
+        budgetROIFilter = false,
+        finalReceiptFilter = ''
+    ) {
         try {
-            const result = await roiRepository.getROIData(page, limit, search,budgetROIFilter,finalReceiptFilter);
-            
-            // Transform dữ liệu
-            const transformed = this.transformData(result.data);
-            
+
+            const result = await roiRepository.getROIData(
+                page,
+                limit,
+                search,
+                budgetROIFilter,
+                finalReceiptFilter
+            );
+
+            // ========================================================
+            // TRANSFORM DỮ LIỆU
+            // ========================================================
+
+            const transformed =
+                this.transformData(result.data);
+
             return {
                 data: transformed,
                 total: result.total,
                 page: result.page,
                 limit: result.limit
             };
+
         } catch (error) {
-            console.error('❌ Error in ROIService.getROIData:', error.message);
+
+            console.error(
+                '❌ Error in ROIService.getROIData:',
+                error.message
+            );
+
             return {
                 data: [],
                 total: 0,
@@ -29,213 +56,548 @@ class ROIService {
         }
     }
 
+
     /**
-     * Transform dữ liệu từ database sang định dạng frontend
+     * ============================================================
+     * TRANSFORM DỮ LIỆU DATABASE → FRONTEND
+     * ============================================================
      */
     transformData(results) {
+
         if (!results || results.length === 0) {
             return [];
         }
-        
+
         return results.map((item) => {
-            const budgetROI = parseFloat(item.roi_plan) || 0;
-            const actualROI = parseFloat(item.roi_act) || 0;
-            
-            const inDate = item.in_date || null;
-            const paybackDate = item.payback_date || null;
 
-            const hasFinalReceiptDate = inDate !== null && 
-                                        inDate !== undefined && 
-                                        inDate !== '' && 
-                                        inDate !== 'N/A' &&
-                                        !(inDate instanceof Date && isNaN(inDate.getTime()));
-            
-            const hasEstimatedPaybackDate = paybackDate !== null && 
-                                            paybackDate !== undefined && 
-                                            paybackDate !== '' && 
-                                            paybackDate !== 'N/A' &&
-                                            !(paybackDate instanceof Date && isNaN(paybackDate.getTime()));
+            // ========================================================
+            // ROI
+            // ========================================================
 
-            // Xác định Planned Results
+            const budgetROI =
+                parseFloat(item.roi_plan) || 0;
+
+            const actualROI =
+                parseFloat(item.roi_act) || 0;
+
+
+            // ========================================================
+            // FINAL RECEIPT DATE
+            // ========================================================
+
+            const inDate =
+                item.in_date || null;
+
+            const paybackDate =
+                item.payback_date || null;
+
+
+            // ========================================================
+            // FINAL RECEIPT DATE CÓ TỒN TẠI KHÔNG
+            // ========================================================
+
+            const hasFinalReceiptDate =
+                inDate !== null &&
+                inDate !== undefined &&
+                inDate !== '' &&
+                inDate !== 'N/A' &&
+                !(
+                    inDate instanceof Date &&
+                    isNaN(inDate.getTime())
+                );
+
+
+            // ========================================================
+            // ESTIMATED PAYBACK DATE
+            // ========================================================
+
+            const hasEstimatedPaybackDate =
+                paybackDate !== null &&
+                paybackDate !== undefined &&
+                paybackDate !== '' &&
+                paybackDate !== 'N/A' &&
+                !(
+                    paybackDate instanceof Date &&
+                    isNaN(paybackDate.getTime())
+                );
+
+
+            const receiptSheetSta =
+                Number(item.receiptSheetSta) || 0;
+
+
+            // ========================================================
+            // PLANNED RESULTS
+            // ========================================================
+
             let plannedResults = 'N/A';
-            
+
             if (!hasFinalReceiptDate) {
-                plannedResults = '⏳ Chờ nhập hàng';
-            } else if (actualROI <= 0 || parseFloat(item.act_benifit) <= 0) {
-                plannedResults = '⏳ Chờ cập nhật Benefit';
-            } else if (actualROI > 0 && budgetROI > 0) {
+
+                plannedResults =
+                    '⏳ Chờ nhập hàng';
+
+            } else if (
+                actualROI <= 0 ||
+                parseFloat(item.act_benifit) <= 0
+            ) {
+
+                plannedResults =
+                    '⏳ Chờ cập nhật Benefit';
+
+            } else if (
+                actualROI > 0 &&
+                budgetROI > 0
+            ) {
+
                 if (actualROI >= budgetROI) {
-                    plannedResults = 'PASS ✅';
+
+                    plannedResults =
+                        'PASS ✅';
+
                 } else {
-                    plannedResults = 'NOT PASS ❌';
+
+                    plannedResults =
+                        'NOT PASS ❌';
                 }
-            } else if (actualROI > 0 && budgetROI <= 0) {
+
+            } else if (
+                actualROI > 0 &&
+                budgetROI <= 0
+            ) {
+
                 plannedResults = 'N/A';
             }
-            
+
+
+            // ========================================================
+            // TRẢ DỮ LIỆU CHO FRONTEND
+            // ========================================================
+
             return {
-                department: item.dept_name || '-',
-                createUser: item.create_user || '-',
-                assetClass: '-',
-                assetDescription: item.fa_desc || '-',
-                purchaseReason: item.pur_reason || '-',
-                depreciation: item.fa_depr || '-',
-                requestDate: item.req_date,
-                finalReceiptDate: item.in_date,
-                estimatedPaybackTime: parseFloat(item.yr_payback) || 0,
-                estimatedPaybackDate: item.payback_date,
-                budgetQuantity: parseInt(item.plan_qty) || 0,
-                budgetAmount: parseFloat(item.plan_amt) || 0,
-                budgetBenefit: parseFloat(item.plan_benifit) || 0,
-                budgetROI: budgetROI,
-                actualQuantity: parseInt(item.in_qty) || 0,
-                actualAmount: parseFloat(item.act_amt) || 0,
-                actualBenefit: parseFloat(item.act_benifit) || 0,
-                actualROI: actualROI,
-                plannedResults: plannedResults,
-                planNo: item.plan_no,
-                planId: item.plan_id,
-                hasFinalReceiptDate: hasFinalReceiptDate,
-                hasEstimatedPaybackDate: hasEstimatedPaybackDate
+
+                department:
+                    item.dept_name || '-',
+
+                createUser:
+                    item.create_user || '-',
+
+                assetClass:
+                    '-',
+
+                assetDescription:
+                    item.fa_desc || '-',
+
+                purchaseReason:
+                    item.pur_reason || '-',
+
+                depreciation:
+                    item.fa_depr || '-',
+
+                requestDate:
+                    item.req_date,
+
+                finalReceiptDate:
+                    item.in_date,
+
+                // ====================================================
+                // QUAN TRỌNG:
+                // oa_fa_pur_in1.sheet_sta
+                // ====================================================
+                receiptSheetSta:
+                    receiptSheetSta,
+
+                estimatedPaybackTime:
+                    parseFloat(item.yr_payback) || 0,
+
+                estimatedPaybackDate:
+                    item.payback_date,
+
+                budgetQuantity:
+                    parseInt(item.plan_qty) || 0,
+
+                budgetAmount:
+                    parseFloat(item.plan_amt) || 0,
+
+                budgetBenefit:
+                    parseFloat(item.plan_benifit) || 0,
+
+                budgetROI:
+                    budgetROI,
+
+                actualQuantity:
+                    parseInt(item.in_qty) || 0,
+
+                actualAmount:
+                    parseFloat(item.act_amt) || 0,
+
+                actualBenefit:
+                    parseFloat(item.act_benifit) || 0,
+
+                actualROI:
+                    actualROI,
+
+                plannedResults:
+                    plannedResults,
+
+                planNo:
+                    item.plan_no,
+
+                planId:
+                    item.plan_id,
+
+                hasFinalReceiptDate:
+                    hasFinalReceiptDate,
+
+                hasEstimatedPaybackDate:
+                    hasEstimatedPaybackDate
             };
         });
     }
-/**
- * Lấy toàn bộ dữ liệu ROI để export Excel
- */
-async getROIDataForExport(
-    search = '',
-    budgetROIFilter = false,
-    finalReceiptFilter = ''
-) {
-    try {
-        const result = await roiRepository.getROIData(
-            1,
-            50,
-            search,
-            budgetROIFilter,
-            finalReceiptFilter,
-            true
-        );
 
-        const transformed =
-            this.transformData(result.data);
 
-        return {
-            data: transformed,
-            total: transformed.length
-        };
-
-    } catch (error) {
-        console.error(
-            '❌ Error in ROIService.getROIDataForExport:',
-            error.message
-        );
-
-        throw error;
-    }
-}
     /**
-     * Cập nhật Actual Benefit
+     * ============================================================
+     * LẤY TOÀN BỘ DỮ LIỆU ROI ĐỂ EXPORT EXCEL
+     * ============================================================
      */
-    async updateActualBenefit(planNo, planId, benefitValue) {
+    async getROIDataForExport(
+        search = '',
+        budgetROIFilter = false,
+        finalReceiptFilter = ''
+    ) {
         try {
-            // Validate input
-            if (!planNo || !planId) {
-                throw new Error('Thiếu thông tin planNo hoặc planId');
-            }
 
-            if (benefitValue === undefined || benefitValue === null) {
-                throw new Error('Vui lòng nhập giá trị benefit');
-            }
+            const result =
+                await roiRepository.getROIData(
+                    1,
+                    50,
+                    search,
+                    budgetROIFilter,
+                    finalReceiptFilter,
+                    true
+                );
 
-            if (isNaN(benefitValue) || benefitValue < 0) {
-                throw new Error('Giá trị benefit phải là số và lớn hơn hoặc bằng 0');
-            }
+            const transformed =
+                this.transformData(result.data);
 
-            // Kiểm tra giới hạn số (phần nguyên tối đa 10 chữ số)
-            const strValue = String(benefitValue);
-            const parts = strValue.split('.');
-            const integerPart = parts[0] || '0';
-            
-            if (integerPart.replace('-', '').length > 10) {
-                throw new Error('Không được nhập quá 10 chữ số cho phần nguyên');
-            }
+            return {
+                data: transformed,
+                total: transformed.length
+            };
 
-            // Gọi repository để cập nhật
-            const result = await roiRepository.updateActualBenefit(planNo, planId, benefitValue);
-            
-            return result;
         } catch (error) {
-            console.error('❌ Error in ROIService.updateActualBenefit:', error);
-            throw error;
-        }
-    }
 
-    /**
-     * Lấy thông tin chi tiết của một record
-     */
-    async getRecordDetail(planNo, planId) {
-        try {
-            // Lấy tất cả dữ liệu và filter theo planNo, planId
-            const allData = await roiRepository.getROIData(1, 10000, '');
-            const records = allData.data || [];
-            
-            const record = records.find(item => 
-                item.plan_no === planNo && item.plan_id === planId
+            console.error(
+                '❌ Error in ROIService.getROIDataForExport:',
+                error.message
             );
-            
-            if (!record) {
-                throw new Error('Không tìm thấy bản ghi');
-            }
-            
-            return this.transformData([record])[0] || null;
-        } catch (error) {
-            console.error('❌ Error in ROIService.getRecordDetail:', error);
+
             throw error;
         }
     }
 
+
     /**
-     * Thống kê tổng hợp
+     * ============================================================
+     * CẬP NHẬT ACTUAL BENEFIT
+     * ============================================================
+     */
+    async updateActualBenefit(
+        planNo,
+        planId,
+        benefitValue
+    ) {
+        try {
+
+            // ========================================================
+            // VALIDATE PLAN
+            // ========================================================
+
+            if (!planNo || !planId) {
+                throw new Error(
+                    'Thiếu thông tin planNo hoặc planId'
+                );
+            }
+
+
+            // ========================================================
+            // VALIDATE BENEFIT
+            // ========================================================
+
+            if (
+                benefitValue === undefined ||
+                benefitValue === null
+            ) {
+                throw new Error(
+                    'Vui lòng nhập giá trị benefit'
+                );
+            }
+
+
+            if (
+                isNaN(benefitValue) ||
+                benefitValue < 0
+            ) {
+                throw new Error(
+                    'Giá trị benefit phải là số và lớn hơn hoặc bằng 0'
+                );
+            }
+
+
+            // ========================================================
+            // KIỂM TRA GIỚI HẠN SỐ
+            // PHẦN NGUYÊN TỐI ĐA 10 CHỮ SỐ
+            // ========================================================
+
+            const strValue =
+                String(benefitValue);
+
+            const parts =
+                strValue.split('.');
+
+            const integerPart =
+                parts[0] || '0';
+
+
+            if (
+                integerPart
+                    .replace('-', '')
+                    .length > 10
+            ) {
+                throw new Error(
+                    'Không được nhập quá 10 chữ số cho phần nguyên'
+                );
+            }
+
+
+            // ========================================================
+            // GỌI REPOSITORY UPDATE
+            // ========================================================
+
+            const result =
+                await roiRepository.updateActualBenefit(
+                    planNo,
+                    planId,
+                    benefitValue
+                );
+
+            return result;
+
+        } catch (error) {
+
+            console.error(
+                '❌ Error in ROIService.updateActualBenefit:',
+                error
+            );
+
+            throw error;
+        }
+    }
+
+
+    /**
+     * ============================================================
+     * LẤY THÔNG TIN CHI TIẾT MỘT RECORD
+     * ============================================================
+     */
+    async getRecordDetail(
+        planNo,
+        planId
+    ) {
+        try {
+
+            const allData =
+                await roiRepository.getROIData(
+                    1,
+                    10000,
+                    ''
+                );
+
+            const records =
+                allData.data || [];
+
+            const record =
+                records.find(item =>
+                    item.plan_no === planNo &&
+                    item.plan_id === planId
+                );
+
+            if (!record) {
+                throw new Error(
+                    'Không tìm thấy bản ghi'
+                );
+            }
+
+            return (
+                this.transformData([record])[0] ||
+                null
+            );
+
+        } catch (error) {
+
+            console.error(
+                '❌ Error in ROIService.getRecordDetail:',
+                error
+            );
+
+            throw error;
+        }
+    }
+
+
+    /**
+     * ============================================================
+     * THỐNG KÊ TỔNG HỢP
+     * ============================================================
      */
     async getStatistics() {
         try {
-            const result = await roiRepository.getROIData(1, 10000, '');
-            const data = this.transformData(result.data || []);
-            
-            const totalPlanAmount = data.reduce((sum, item) => sum + (item.budgetAmount || 0), 0);
-            const totalActualAmount = data.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
-            
-            const validPlanROI = data.filter(item => item.budgetROI > 0);
-            const avgPlanROI = validPlanROI.length > 0 
-                ? validPlanROI.reduce((sum, item) => sum + item.budgetROI, 0) / validPlanROI.length 
-                : 0;
-            
-            const validActualROI = data.filter(item => item.actualROI > 0);
-            const avgActualROI = validActualROI.length > 0 
-                ? validActualROI.reduce((sum, item) => sum + item.actualROI, 0) / validActualROI.length 
-                : 0;
-            
-            const passCount = data.filter(item => item.plannedResults === 'PASS ✅').length;
-            const notPassCount = data.filter(item => item.plannedResults === 'NOT PASS ❌').length;
-            const pendingCount = data.filter(item => 
-                item.plannedResults === '⏳ Chờ nhập hàng' || 
-                item.plannedResults === '⏳ Chờ cập nhật Benefit'
-            ).length;
-            
+
+            const result =
+                await roiRepository.getROIData(
+                    1,
+                    10000,
+                    ''
+                );
+
+            const data =
+                this.transformData(
+                    result.data || []
+                );
+
+
+            // ========================================================
+            // TOTAL PLAN AMOUNT
+            // ========================================================
+
+            const totalPlanAmount =
+                data.reduce(
+                    (sum, item) =>
+                        sum +
+                        (item.budgetAmount || 0),
+                    0
+                );
+
+
+            // ========================================================
+            // TOTAL ACTUAL AMOUNT
+            // ========================================================
+
+            const totalActualAmount =
+                data.reduce(
+                    (sum, item) =>
+                        sum +
+                        (item.actualAmount || 0),
+                    0
+                );
+
+
+            // ========================================================
+            // AVG PLAN ROI
+            // ========================================================
+
+            const validPlanROI =
+                data.filter(
+                    item =>
+                        item.budgetROI > 0
+                );
+
+            const avgPlanROI =
+                validPlanROI.length > 0
+                    ? validPlanROI.reduce(
+                        (sum, item) =>
+                            sum +
+                            item.budgetROI,
+                        0
+                    ) / validPlanROI.length
+                    : 0;
+
+
+            // ========================================================
+            // AVG ACTUAL ROI
+            // ========================================================
+
+            const validActualROI =
+                data.filter(
+                    item =>
+                        item.actualROI > 0
+                );
+
+            const avgActualROI =
+                validActualROI.length > 0
+                    ? validActualROI.reduce(
+                        (sum, item) =>
+                            sum +
+                            item.actualROI,
+                        0
+                    ) / validActualROI.length
+                    : 0;
+
+
+            // ========================================================
+            // PASS / NOT PASS / PENDING
+            // ========================================================
+
+            const passCount =
+                data.filter(
+                    item =>
+                        item.plannedResults ===
+                        'PASS ✅'
+                ).length;
+
+
+            const notPassCount =
+                data.filter(
+                    item =>
+                        item.plannedResults ===
+                        'NOT PASS ❌'
+                ).length;
+
+
+            const pendingCount =
+                data.filter(
+                    item =>
+                        item.plannedResults ===
+                            '⏳ Chờ nhập hàng' ||
+                        item.plannedResults ===
+                            '⏳ Chờ cập nhật Benefit'
+                ).length;
+
+
             return {
-                totalRecords: data.length,
-                totalPlanAmount: totalPlanAmount,
-                totalActualAmount: totalActualAmount,
-                avgPlanROI: avgPlanROI,
-                avgActualROI: avgActualROI,
-                passCount: passCount,
-                notPassCount: notPassCount,
-                pendingCount: pendingCount
+                totalRecords:
+                    data.length,
+
+                totalPlanAmount:
+                    totalPlanAmount,
+
+                totalActualAmount:
+                    totalActualAmount,
+
+                avgPlanROI:
+                    avgPlanROI,
+
+                avgActualROI:
+                    avgActualROI,
+
+                passCount:
+                    passCount,
+
+                notPassCount:
+                    notPassCount,
+
+                pendingCount:
+                    pendingCount
             };
+
         } catch (error) {
-            console.error('❌ Error in ROIService.getStatistics:', error);
+
+            console.error(
+                '❌ Error in ROIService.getStatistics:',
+                error
+            );
+
             return {
                 totalRecords: 0,
                 totalPlanAmount: 0,
@@ -248,42 +610,79 @@ async getROIDataForExport(
             };
         }
     }
-    async login(empNo, password) {
-    if (!empNo || !password) {
-        return null;
+
+
+    /**
+     * ============================================================
+     * LOGIN
+     * ============================================================
+     */
+    async login(
+        empNo,
+        password
+    ) {
+
+        if (!empNo || !password) {
+            return null;
+        }
+
+
+        const user =
+            await roiRepository.getUserByEmpNo(
+                empNo
+            );
+
+
+        if (!user) {
+            return null;
+        }
+
+
+        if (!user.is_active) {
+            return null;
+        }
+
+
+        // Hiện tại password đang lưu plain text
+        if (
+            user.password_hash !== password
+        ) {
+            return null;
+        }
+
+
+        return {
+            emp_no: user.emp_no
+        };
     }
 
-    const user = await roiRepository.getUserByEmpNo(empNo);
 
-    if (!user) {
-        return null;
-    }
-
-    if (!user.is_active) {
-        return null;
-    }
-
-    // Hiện tại password đang lưu plain text
-    if (user.password_hash  !== password) {
-        return null;
-    }
-
-    return {
-        emp_no: user.emp_no
-    };
-}
-async checkOrderOwner(planNo, planId, empNo) {
-
-    if (!planNo || planId === undefined || !empNo) {
-        return false;
-    }
-
-    return await roiRepository.checkOrderOwner(
+    /**
+     * ============================================================
+     * CHECK ORDER OWNER
+     * ============================================================
+     */
+    async checkOrderOwner(
         planNo,
         planId,
         empNo
-    );
-}
+    ) {
+
+        if (
+            !planNo ||
+            planId === undefined ||
+            !empNo
+        ) {
+            return false;
+        }
+
+
+        return await roiRepository.checkOrderOwner(
+            planNo,
+            planId,
+            empNo
+        );
+    }
 }
 
 module.exports = new ROIService();
